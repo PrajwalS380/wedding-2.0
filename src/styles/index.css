@@ -40,10 +40,10 @@
   --color-ink-soft: #66513c;
 
   /* typography */
-  --font-display: 'Cormorant Garamond', 'Cormorant Fallback', Georgia, serif;
-  --font-caps: 'Cinzel', 'Cinzel Fallback', Georgia, serif;
-  --font-body: 'EB Garamond', 'EB Garamond Fallback', Georgia, serif;
-  --font-script: 'Pinyon Script', 'Pinyon Fallback', cursive;
+  --font-display: 'Cormorant Garamond', 'Tiro Kannada', 'Tiro Devanagari Hindi', 'Cormorant Fallback', Georgia, serif;
+  --font-caps: 'Cinzel', 'Tiro Kannada', 'Tiro Devanagari Hindi', 'Cinzel Fallback', Georgia, serif;
+  --font-body: 'EB Garamond', 'Tiro Kannada', 'Tiro Devanagari Hindi', 'EB Garamond Fallback', Georgia, serif;
+  --font-script: 'Pinyon Script', 'Tiro Kannada', 'Tiro Devanagari Hindi', 'Pinyon Fallback', cursive;
 
   /* breakpoints (Tailwind defaults + a small-phone step) */
   --breakpoint-xs: 25rem;
@@ -249,4 +249,14 @@ html.is-locked body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+}
+
+/* Kannada and Hindi: the Latin caps styling (wide tracking, uppercase) does not
+   suit these scripts; give them natural spacing and room for their tall glyphs. */
+html:is(:lang(kn), :lang(hi)) body * {
+  letter-spacing: normal !important;
+  text-transform: none !important;
+}
+html:is(:lang(kn), :lang(hi)) :is(h1, h2, h3, p, li, dt, dd, label, legend, button, a) {
+  line-height: 1.45;
 }

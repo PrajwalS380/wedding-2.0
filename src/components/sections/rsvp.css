@@ -1,0 +1,256 @@
+/* RSVP — Reference B screen 8 */
+.rsvp {
+  padding: var(--section-pad-y) 1.1rem;
+  scroll-margin-top: var(--header-h);
+  display: flex;
+  justify-content: center;
+  background: var(--color-ivory);
+}
+.rsvp__veil {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(70% 60% at 50% 50%, rgb(251 246 236 / 0.55), rgb(251 246 236 / 0.2));
+}
+.rsvp__lotus {
+  right: -10%;
+  bottom: -2%;
+  width: min(58vw, 340px);
+  transform: scaleX(-1);
+  z-index: 1;
+}
+.rsvp__card {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 30rem);
+  padding: 2rem 1.4rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.rsvp__eyebrow {
+  text-align: center;
+  font-family: var(--font-caps);
+  font-size: 0.85rem;
+  letter-spacing: 0.3em;
+  margin-right: -0.3em;
+  color: var(--color-gold-deep);
+}
+.rsvp__title {
+  margin-top: 0.2rem;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(1.9rem, 7vw, 2.4rem);
+  line-height: 1.15;
+  color: var(--color-emerald-deep);
+}
+.rsvp__rule {
+  align-self: center;
+  margin-block: 0.4rem 0.6rem;
+}
+.rsvp__field {
+  margin-top: 1rem;
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+.rsvp__label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--color-ink);
+}
+.rsvp__optional {
+  font-weight: 400;
+  font-style: italic;
+  color: var(--color-ink-soft);
+}
+.rsvp__input {
+  display: block;
+  width: 100%;
+  min-height: 2.9rem;
+  padding: 0 0.9rem;
+  border-radius: 0.6rem;
+  border: 1px solid rgb(185 138 46 / 0.6);
+  background: rgb(255 253 247 / 0.85);
+  font: inherit;
+  color: var(--color-ink);
+  transition:
+    border-color var(--dur-base) var(--ease-silk),
+    box-shadow var(--dur-base) var(--ease-silk);
+}
+.rsvp__input::placeholder {
+  color: #8f7c66;
+}
+.rsvp__input:focus {
+  border-color: var(--color-emerald);
+  box-shadow: 0 0 0 3px rgb(19 77 58 / 0.18);
+  outline: none;
+}
+.rsvp__input[aria-invalid='true'] {
+  border-color: var(--color-maroon);
+}
+.rsvp__choices {
+  display: grid;
+  gap: 0.5rem;
+}
+.rsvp__choice {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-height: 3.4rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.7rem;
+  border: 1px solid rgb(185 138 46 / 0.45);
+  background: rgb(255 253 247 / 0.7);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-base) var(--ease-silk),
+    background-color var(--dur-base) var(--ease-silk);
+}
+.rsvp__choice input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.rsvp__mark {
+  flex-shrink: 0;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  border: 1.5px solid rgb(125 30 44 / 0.65);
+  display: grid;
+  place-items: center;
+  transition: background-color var(--dur-base) var(--ease-silk);
+}
+.rsvp__choice.is-checked {
+  border-color: var(--color-maroon);
+  background: rgb(253 244 236 / 0.95);
+}
+.rsvp__choice.is-checked .rsvp__mark {
+  background: var(--color-maroon);
+  border-color: var(--color-maroon);
+}
+.rsvp__choice.is-checked .rsvp__mark::after {
+  content: '';
+  width: 0.36rem;
+  height: 0.65rem;
+  margin-top: -0.12rem;
+  border: solid #fff4e4;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.rsvp__choice:has(input:focus-visible) {
+  outline: 2px solid var(--focus-ring, var(--color-emerald));
+  outline-offset: 2px;
+}
+.rsvp__choice-text {
+  display: grid;
+}
+.rsvp__choice-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--color-ink);
+}
+.rsvp__choice-hint {
+  font-size: 0.9rem;
+  color: var(--color-ink-soft);
+}
+.rsvp__error {
+  margin-top: 0.35rem;
+  font-size: 0.92rem;
+  color: var(--color-maroon);
+}
+.rsvp__send {
+  margin-top: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 3.1rem;
+  border-radius: 999px;
+  font-family: var(--font-caps);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-gold-pale);
+  background: linear-gradient(180deg, #92283a, var(--color-maroon-deep));
+  box-shadow:
+    inset 0 0 0 1px rgb(240 219 160 / 0.55),
+    0 14px 26px -14px rgb(90 20 30 / 0.85);
+  transition: filter var(--dur-base) var(--ease-silk);
+}
+.rsvp__send:hover {
+  filter: brightness(1.08);
+}
+.rsvp__note {
+  margin-top: 0.7rem;
+  text-align: center;
+  font-style: italic;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--color-ink-soft);
+}
+@media (min-width: 900px) {
+  .rsvp__lotus {
+    right: 4%;
+    width: 300px;
+  }
+}
+
+.rsvp__textarea {
+  min-height: 5.2rem;
+  padding: 0.65rem 0.9rem;
+  resize: vertical;
+  line-height: 1.45;
+}
+/* ready to continue in WhatsApp (never claims the reply was received) */
+.rsvp__ready:empty {
+  display: none;
+}
+.rsvp__ready {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.75rem;
+  text-align: center;
+  background: rgb(232 244 236 / 0.85);
+  box-shadow: inset 0 0 0 1px rgb(19 77 58 / 0.35);
+}
+.rsvp__ready-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--color-emerald-deep);
+}
+.rsvp__ready-note {
+  margin-top: 0.2rem;
+  font-size: 0.95rem;
+  color: var(--color-ink-soft);
+}
+.rsvp__ready-link {
+  margin-top: 0.4rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  font-weight: 600;
+  color: var(--color-emerald-deep);
+  text-decoration: underline;
+  text-decoration-color: rgb(185 138 46 / 0.7);
+  text-underline-offset: 0.3em;
+}
+.rsvp__privacy {
+  margin-top: 0.8rem;
+  text-align: center;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: #6f5f4c;
+}

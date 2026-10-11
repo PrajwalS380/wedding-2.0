@@ -1,0 +1,191 @@
+/* Celebrations — Reference B screen 5 */
+.celebrations {
+  padding: clamp(4.5rem, 10vw, 7.5rem) 1rem clamp(5rem, 11vw, 8rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f8ead2;
+}
+.celebrations__bg img {
+  object-position: 50% 80%;
+  opacity: 0.6;
+}
+.celebrations__veil {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(70% 60% at 50% 40%, rgb(255 250 240 / 0.9), rgb(251 240 220 / 0.55) 75%, rgb(248 232 205 / 0.35));
+}
+.celebrations__head {
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  max-width: 30rem;
+}
+
+.celebrations__tabs {
+  margin-top: 1.8rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+  width: min(100%, 26rem);
+}
+.day-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 3.9rem;
+  padding: 0.55rem 0.5rem;
+  border-radius: 10px;
+  border: 0;
+  background:
+    url('/site/parchment.webp') center / 240px repeat,
+    #f6ead2;
+  color: var(--color-ink);
+  box-shadow:
+    inset 0 0 0 1px rgb(185 138 46 / 0.7),
+    inset 0 0 0 3px rgb(255 250 238 / 0.8),
+    0 10px 20px -16px rgb(60 38 12 / 0.6);
+  transition:
+    background-color var(--dur-base) var(--ease-silk),
+    transform var(--dur-base) var(--ease-silk);
+}
+.day-tab:hover {
+  transform: translateY(-2px);
+}
+.day-tab[aria-selected='true'] {
+  background: linear-gradient(180deg, #8e2634, #6a1824);
+  color: #fdf1dc;
+  box-shadow:
+    inset 0 0 0 1px rgb(233 207 134 / 0.95),
+    inset 0 0 0 3px rgb(106 24 36 / 1),
+    inset 0 0 0 4px rgb(233 207 134 / 0.45),
+    0 14px 24px -14px rgb(90 19 32 / 0.8);
+  --focus-ring: var(--color-gold-deep);
+}
+.day-tab__name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.35rem;
+  line-height: 1.1;
+}
+.day-tab__date {
+  font-size: 0.88rem;
+  letter-spacing: 0.02em;
+  opacity: 0.92;
+}
+
+.day-panel {
+  margin-top: 1.2rem;
+  width: min(100%, 26rem);
+  padding: 1.8rem 1.4rem 1.4rem;
+  text-align: center;
+}
+.day-panel__title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 2rem;
+  color: var(--color-emerald-deep);
+}
+.day-panel__date {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--color-maroon);
+}
+.day-panel__rule {
+  margin: 0.6rem auto 0.8rem;
+}
+.day-panel__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.9rem;
+  text-align: left;
+}
+.day-panel__rows li {
+  display: grid;
+  grid-template-columns: 2.6rem 1fr;
+  gap: 0.8rem;
+  align-items: center;
+  font-size: 0.98rem;
+  line-height: 1.35;
+  color: #5a4630;
+}
+.day-panel__rows strong {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.08rem;
+  color: #2f2416;
+}
+.day-panel__icon {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  color: #8a6420;
+  background: radial-gradient(circle at 40% 35%, #fff8e6, #f0dfb8);
+  box-shadow: inset 0 0 0 1px rgb(185 138 46 / 0.7);
+}
+.day-panel__icon svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+.day-panel__window {
+  margin: 1.3rem auto 0;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 46% 46% 10px 10px / 34% 34% 10px 10px;
+  box-shadow:
+    inset 0 0 0 1px rgb(185 138 46 / 0.8),
+    0 10px 20px -14px rgb(60 38 12 / 0.6);
+  position: relative;
+}
+.day-panel__window img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 40%;
+}
+.day-panel__window::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 4px rgb(255 250 238 / 0.7), inset 0 0 0 5px rgb(185 138 46 / 0.5);
+}
+
+@media (min-width: 900px) {
+  .day-panel,
+  .celebrations__tabs {
+    width: 30rem;
+  }
+}
+/* wide screens: the day's details beside a large view of the mandap */
+@media (min-width: 1100px) {
+  .celebrations__tabs {
+    width: 32rem;
+  }
+  .day-panel {
+    width: min(100%, 64rem);
+    padding: 2.2rem 2.2rem 2.2rem 2.6rem;
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.25fr);
+    column-gap: 2.4rem;
+    align-content: center;
+  }
+  .day-panel > :not(.day-panel__window):not(.ornate-frame__corner) {
+    grid-column: 1;
+  }
+  .day-panel__window {
+    grid-column: 2;
+    grid-row: 1 / span 4;
+    margin: 0;
+    aspect-ratio: auto;
+    min-height: 22rem;
+    height: 100%;
+  }
+}

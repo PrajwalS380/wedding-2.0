@@ -1,7 +1,7 @@
 /* ==================================================================
-   Royal intro — palace doors, velvet envelope, golden-hour light.
-   Stage coordinates are the reference painting's (864 x 1536); every layer
-   is positioned in % of the stage so the composition scales as one piece.
+   Royal intro — a live WebGL palace scene with HTML lettering on top.
+   The canvas fills the screen; the camera frames the doors and envelope for
+   any screen shape, and the lettering sits where Reference A places it.
 =================================================================== */
 
 .intro {
@@ -10,318 +10,32 @@
   inset: 0;
   z-index: 50;
   overflow: hidden;
-  background: #1a0f07;
+  background: radial-gradient(90% 70% at 50% 40%, #4a2a12 0%, #1f1007 60%, #120904 100%);
   color: var(--color-ink);
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
+/* no WebGL: warm painted-light gradient behind the lettering */
+.intro--flat {
+  background:
+    radial-gradient(70% 45% at 50% 30%, #ffe2b3 0%, #f2b06a 40%, rgb(122 58 22 / 0) 75%),
+    radial-gradient(120% 90% at 50% 100%, #6b3412 0%, #2a1408 70%);
+}
 
-/* The stage keeps the painting's aspect ratio, filling the height. On phones it is
-   wider than the screen and is cropped evenly at the sides (the doors' outer
-   edges); on wide screens it sits centred between the wings. */
-.intro-stage {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  height: 100vh;
-  height: 100dvh;
-  aspect-ratio: 864 / 1536;
-  transform: translateX(-50%);
-  container-type: size;
-  container-name: stage;
-}
-/* ---------------------------------------------------------------- wings */
-.intro-wing {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  width: 150cqh;
-  pointer-events: none;
-  display: none;
-}
-@media (min-aspect-ratio: 864/1536) {
-  .intro-wing {
-    display: block;
-  }
-}
-.intro-wing--left {
-  right: 100%;
-}
-.intro-wing--right {
-  left: 100%;
-  transform: scaleX(-1);
-}
-.intro-wing__wall {
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 58cqh;
-  background:
-    radial-gradient(26cqh 34cqh at calc(100% - 8cqh) 40cqh, rgb(120 70 28 / 0.55), transparent 70%),
-    linear-gradient(180deg, #21130a, #2d1a0c 70%, #1a0e06);
-}
-.intro-wing__floor {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 56.5cqh;
-  bottom: 0;
-  background:
-    radial-gradient(22cqh 9cqh at calc(100% - 9cqh) 26cqh, rgb(255 200 120 / 0.42), transparent 75%),
-    radial-gradient(18cqh 30cqh at 100% 30cqh, rgb(250 214 160 / 0.6), transparent 80%),
-    radial-gradient(40cqh 20cqh at 100% 40cqh, rgb(240 200 150 / 0.35), transparent 70%),
-    linear-gradient(180deg, #1c1008 0%, #4a301a 5%, #8a6644 26%, #7a5636 62%, #3a2412 100%);
-}
-/* soft pillar shadow where the painting meets the hall, so there is no seam */
-.intro-seam {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 9cqh;
-  display: none;
-  pointer-events: none;
-  background: linear-gradient(90deg, rgb(10 5 2 / 0) 0%, rgb(10 5 2 / 0.55) 46%, rgb(10 5 2 / 0.42) 56%, rgb(10 5 2 / 0) 100%);
-}
-.intro-seam--left {
-  left: -4.5cqh;
-}
-.intro-seam--right {
-  right: -4.5cqh;
-}
-@media (min-aspect-ratio: 864/1536) {
-  .intro-seam {
-    display: block;
-  }
-}
-.intro-wing__glow {
-  position: absolute;
-  right: -6cqh;
-  top: 30cqh;
-  width: 40cqh;
-  height: 40cqh;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgb(255 190 105 / 0.32), rgb(255 160 70 / 0.12) 55%, transparent 100%);
-  mix-blend-mode: screen;
-  animation: intro-flicker 3.4s ease-in-out infinite alternate;
-}
-.intro-wing__lamp {
-  position: absolute;
-  right: 3cqh;
-  top: 47.3cqh;
-  width: 12.5cqh;
-  height: 23.4cqh;
-}
-.intro-wing__bowl {
-  -webkit-mask-image: radial-gradient(60% 58% at 55% 55%, #000 55%, transparent 100%);
-  mask-image: radial-gradient(60% 58% at 55% 55%, #000 55%, transparent 100%);
-}
-.intro-wing__shade {
+.intro-scene {
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(270deg, rgb(12 6 2 / 0.1) 0, rgb(12 6 2 / 0.4) 9cqh, rgb(12 6 2 / 0.78) 26cqh, rgb(12 6 2 / 0.95) 42cqh, #0c0602 58cqh),
-    linear-gradient(180deg, rgb(12 6 2 / 0.4) 0%, transparent 22%, transparent 80%, rgb(12 6 2 / 0.45) 100%);
+  cursor: pointer;
 }
-
-.intro-camera {
-  position: absolute;
+.intro-canvas {
+  position: absolute !important;
   inset: 0;
-  transform-origin: 50% 27%;
-  perspective: 160cqh;
-  perspective-origin: 50% 30%;
-}
-
-.intro-layer {
-  position: absolute;
+  width: 100% !important;
+  height: 100% !important;
   display: block;
-  max-width: none;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-.intro-layer > img,
-img.intro-layer {
-  width: 100%;
-  height: 100%;
-}
-.intro-layer img {
-  display: block;
-  max-width: none;
 }
 
-/* doors swing about their outer hinges, away from the viewer.
-   (Kept flat: preserve-3d plus the shading pseudo-element stalls Chromium's compositor.) */
-.intro-door {
-  transform-style: flat;
-}
-.intro-door--left {
-  transform-origin: 2% 50%;
-}
-.intro-door--right {
-  transform-origin: 98% 50%;
-}
-.intro-door::after {
-  /* shading deepens as a door turns away from the light */
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, rgb(20 8 0 / 0.65), rgb(20 8 0 / 0.25));
-  opacity: var(--door-shade, 0);
-}
-.intro-door--right::after {
-  background: linear-gradient(270deg, rgb(20 8 0 / 0.65), rgb(20 8 0 / 0.25));
-}
-
-/* sunlight through the doorway */
-.intro-rays {
-  position: absolute;
-  left: 18%;
-  top: -4%;
-  width: 64%;
-  height: 62%;
-  pointer-events: none;
-  background:
-    radial-gradient(28% 18% at 50% 23.5%, rgb(255 236 190 / 0.55), transparent 70%),
-    repeating-conic-gradient(from 168deg at 50% 23.5%, rgb(255 225 170 / 0.16) 0deg 3deg, transparent 3deg 9deg);
-  -webkit-mask-image: radial-gradient(60% 70% at 50% 23.5%, #000 0%, transparent 72%);
-  mask-image: radial-gradient(60% 70% at 50% 23.5%, #000 0%, transparent 72%);
-  mix-blend-mode: screen;
-  opacity: 0.55;
-  animation: intro-rays 14s ease-in-out infinite alternate;
-}
-@keyframes intro-rays {
-  from {
-    transform: rotate(-1.5deg);
-    opacity: 0.45;
-  }
-  to {
-    transform: rotate(1.5deg);
-    opacity: 0.7;
-  }
-}
-
-/* ---------------------------------------------------------------- envelope */
-.intro-envelope {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  perspective: 130cqh;
-}
-.intro-flap {
-  transform-origin: 50% 1.6%; /* the hinge: the envelope's top edge */
-  transform-style: preserve-3d;
-}
-.intro-flap > .flap-face {
-  position: absolute;
-  inset: 0;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-.intro-flap > .flap-face--back {
-  transform: rotateY(180deg);
-}
-
-/* the invitation card inside the envelope */
-.intro-card {
-  position: absolute;
-  left: 30%;
-  width: 40%;
-  top: 51.5%;
-  height: 15%;
-  border-radius: 0.35cqh;
-  background:
-    radial-gradient(120% 90% at 50% 0%, #fffaf0 0%, #f6ead1 60%, #ead6ae 100%);
-  box-shadow:
-    0 0 0 0.12cqh rgb(185 138 46 / 0.9) inset,
-    0 0 0 0.45cqh #f6ead1 inset,
-    0 0 0 0.55cqh rgb(185 138 46 / 0.6) inset,
-    0 -0.6cqh 1.6cqh rgb(255 220 150 / 0.35);
-  display: grid;
-  justify-items: center;
-  align-content: start;
-  padding-top: 1.1cqh;
-  gap: 0.2cqh;
-  color: var(--color-maroon);
-  text-align: center;
-}
-.intro-card__mono {
-  font-family: var(--font-display);
-  font-size: 2.3cqh;
-  line-height: 1;
-  color: var(--color-emerald-deep);
-}
-.intro-card__mono span {
-  font-family: var(--font-script);
-  color: var(--color-gold-deep);
-  font-size: 0.75em;
-  margin-inline: 0.08em;
-}
-.intro-card__names {
-  font-family: var(--font-script);
-  font-size: 1.75cqh;
-  line-height: 1.2;
-  color: var(--color-maroon);
-}
-
-.intro-seal-glow {
-  position: absolute;
-  left: calc(430 / 864 * 100%);
-  top: calc(897 / 1536 * 100%);
-  width: 15cqh;
-  height: 15cqh;
-  translate: -50% -50%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgb(255 214 140 / 0.65) 0%, rgb(255 190 110 / 0.25) 35%, transparent 70%);
-  mix-blend-mode: screen;
-  opacity: 0;
-  pointer-events: none;
-}
-.intro-envelope-glow {
-  position: absolute;
-  left: calc(430 / 864 * 100%);
-  top: calc(800 / 1536 * 100%);
-  width: 60cqh;
-  height: 26cqh;
-  translate: -50% -50%;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgb(255 236 190 / 0.85), rgb(255 205 130 / 0.35) 45%, transparent 100%);
-  mix-blend-mode: screen;
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* ---------------------------------------------------------------- flames */
-.intro-flame {
-  position: absolute;
-  width: var(--s, 7cqh);
-  height: var(--s, 7cqh);
-  translate: -50% -55%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgb(255 240 200 / 0.95) 0%, rgb(255 196 92 / 0.55) 22%, rgb(255 150 50 / 0.18) 48%, transparent 70%);
-  mix-blend-mode: screen;
-  pointer-events: none;
-  animation: intro-flicker var(--d, 2.6s) ease-in-out infinite alternate;
-  animation-delay: var(--delay, 0s);
-}
-@keyframes intro-flicker {
-  0% {
-    opacity: 0.75;
-    transform: scale(0.94);
-  }
-  35% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
-  60% {
-    opacity: 0.82;
-    transform: scale(0.98);
-  }
-  100% {
-    opacity: 0.95;
-    transform: scale(1.03);
-  }
-}
-
-/* ---------------------------------------------------------------- text */
+/* ---------------------------------------------------------------- lettering */
 .intro-text {
   position: absolute;
   inset: 0;
@@ -334,22 +48,35 @@ img.intro-layer {
 .intro-title {
   position: absolute;
   left: 50%;
-  top: calc(140 / 1536 * 100%);
-  width: 46%;
+  top: calc(env(safe-area-inset-top) + clamp(4.2rem, 11vh, 7rem));
+  width: min(70vw, 22rem);
   translate: -50% 0;
   display: grid;
   justify-items: center;
-  gap: 0.55cqh;
+  gap: 0.35rem;
+  pointer-events: none;
+  isolation: isolate;
+}
+/* a haze of warm light behind the title, so it reads over the carved doors and the lit palace */
+.intro-title::before {
+  content: '';
+  position: absolute;
+  inset: 18% -14% 18%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(255 245 226 / 0.94), rgb(255 241 218 / 0.88) 62%, rgb(255 236 208 / 0.5) 82%, rgb(255 236 208 / 0) 100%);
   pointer-events: none;
 }
 .intro-title p {
   font-family: var(--font-caps);
-  font-size: max(1.3cqh, 11px);
+  font-size: clamp(0.82rem, 2.2vh, 1.05rem);
   font-weight: 500;
-  letter-spacing: 0.24em;
-  margin-right: -0.24em;
-  color: #46301c;
-  text-shadow: 0 0 1.2cqh rgb(255 240 210 / 0.9);
+  letter-spacing: 0.26em;
+  margin-right: -0.26em;
+  color: #3e2a17;
+  text-shadow:
+    0 0 14px rgb(255 238 205 / 0.95),
+    0 0 4px rgb(255 238 205 / 0.9);
   white-space: nowrap;
 }
 .intro-title svg {
@@ -361,8 +88,8 @@ img.intro-layer {
 .intro-names {
   position: absolute;
   left: 50%;
-  top: calc(1150 / 1536 * 100%);
-  width: 62%;
+  bottom: calc(env(safe-area-inset-bottom) + clamp(7.6rem, 19vh, 11rem));
+  width: min(92vw, 34rem);
   translate: -50% 0;
   display: grid;
   justify-items: center;
@@ -371,43 +98,44 @@ img.intro-layer {
 .intro-names h2 {
   font-family: var(--font-script);
   font-weight: 400;
-  font-size: max(4.4cqh, 28px);
+  font-size: clamp(2.3rem, 5.6vh, 3.6rem);
   line-height: 1.12;
-  color: #163c2c;
+  color: #153b2b;
   white-space: nowrap;
   text-shadow:
-    0 0 1.6cqh rgb(255 244 220 / 0.95),
-    0 0 0.4cqh rgb(255 244 220 / 0.8);
+    0 0 18px rgb(255 242 216 / 0.95),
+    0 0 5px rgb(255 242 216 / 0.9);
 }
 .intro-names h2 .amp {
   font-family: var(--font-display);
   font-style: italic;
   font-size: 0.82em;
   color: #a7772a;
-  margin-inline: 0.12em;
 }
 .intro-names svg {
-  width: 36%;
-  margin-top: 0.3cqh;
+  width: 9rem;
+  margin-top: 0.2rem;
   color: #a87c2c;
 }
 .intro-names .date {
-  margin-top: 0.4cqh;
+  margin-top: 0.25rem;
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: max(1.75cqh, 14px);
+  font-size: clamp(1rem, 2.3vh, 1.3rem);
   letter-spacing: 0.01em;
-  color: #3b2a1a;
+  color: #2f2213;
   white-space: nowrap;
-  text-shadow: 0 0 1cqh rgb(255 244 220 / 0.95);
+  text-shadow:
+    0 0 14px rgb(255 242 216 / 0.95),
+    0 0 4px rgb(255 242 216 / 0.95);
 }
 
 /* the ornate "Tap to open" cartouche */
 .intro-open {
   position: absolute;
   left: 50%;
-  top: calc(1297 / 1536 * 100%);
-  width: calc(400 / 864 * 100%);
+  bottom: calc(env(safe-area-inset-bottom) + clamp(1.4rem, 4vh, 2.6rem));
+  width: min(84vw, 21rem);
   aspect-ratio: 400 / 152;
   translate: -50% 0;
   border: 0;
@@ -415,12 +143,18 @@ img.intro-layer {
   background: none;
   color: #f4dfa4;
   cursor: pointer;
-  border-radius: 1.5cqh;
+  border-radius: 1rem;
   --focus-ring: #f6dc9a;
   transition: transform var(--dur-base) var(--ease-silk);
 }
-/* hover / focus glow: an opacity-only halo (a CSS filter here stalls Chromium's
-   compositor while the parent fades during the opening) */
+.intro-open svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+/* hover / focus glow: an opacity-only halo (CSS filters here can stall Chromium's compositor) */
 .intro-open::before {
   content: '';
   position: absolute;
@@ -431,13 +165,6 @@ img.intro-layer {
   transition: opacity var(--dur-base) var(--ease-silk);
   pointer-events: none;
 }
-.intro-open svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
 .intro-open .label {
   position: absolute;
   left: 0;
@@ -445,7 +172,7 @@ img.intro-layer {
   top: 51%;
   font-family: var(--font-caps);
   font-weight: 500;
-  font-size: max(1.65cqh, 13px);
+  font-size: clamp(0.85rem, 2vh, 1.05rem);
   letter-spacing: 0.2em;
   margin-right: -0.2em;
   line-height: 1;
@@ -460,7 +187,7 @@ img.intro-layer {
   transform: scale(0.97);
 }
 .intro-open:focus-visible {
-  outline-offset: 0.6cqh;
+  outline-offset: 6px;
 }
 .intro-open .pulse {
   animation: intro-pulse 2.8s var(--ease-silk) infinite;
@@ -479,20 +206,11 @@ img.intro-layer {
   }
 }
 
-/* petals / dust canvas */
-.intro-particles {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
 /* light spilling through the doors at the end of the sequence */
 .intro-bloom {
   position: absolute;
   left: 50%;
-  top: 27%;
+  top: 30%;
   width: 230vmax;
   height: 230vmax;
   translate: -50% -50%;
@@ -510,7 +228,7 @@ img.intro-layer {
   pointer-events: none;
 }
 
-/* shown only while the first images decode */
+/* shown while fonts load and the scene's textures are baked */
 .intro-loader {
   position: absolute;
   inset: 0;
@@ -573,34 +291,26 @@ img.intro-layer {
   transition: background-color var(--dur-base) var(--ease-silk), border-color var(--dur-base) var(--ease-silk);
 }
 .intro-skip:hover {
-  background: rgb(26 14 6 / 0.72);
+  background: rgb(26 14 6 / 0.85);
   border-color: rgb(240 219 160 / 0.9);
 }
 
-/* while the sequence plays, nothing inside reacts to the pointer except Skip */
-.intro[data-state='opening'] .intro-stage {
+.intro[data-state='opening'] .intro-scene {
   pointer-events: none;
 }
-.intro[data-state='opening'] .intro-camera,
-.intro[data-state='opening'] .intro-camera .intro-layer {
-  will-change: transform;
-}
 
-/* Short landscape screens (phones turned sideways): the scene keeps the left of
-   the screen and the invitation text sits beside it at a readable size. */
+/* short landscape screens: the lettering sits beside the scene */
 @media (max-height: 560px) and (min-aspect-ratio: 4/3) {
-  .intro-stage {
-    left: 34%;
-  }
   .intro-text {
-    inset: 0 auto 0 100%;
-    width: min(56vw, 30rem);
+    inset: 0 0 0 auto;
+    width: min(50vw, 28rem);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.6rem;
-    padding-left: 4vw;
+    gap: 0.7rem;
+    padding-right: 3vw;
+    background: linear-gradient(90deg, rgb(20 10 4 / 0), rgb(20 10 4 / 0.55) 30%);
   }
   .intro-title,
   .intro-names,
@@ -608,41 +318,46 @@ img.intro-layer {
     position: relative;
     left: auto;
     top: auto;
+    bottom: auto;
     translate: none;
   }
-  .intro-title {
-    width: 15rem;
+  .intro-title::before {
+    display: none;
   }
-  .intro-title p {
-    font-size: 0.8rem;
-    color: #f3dfaa;
-    text-shadow: none;
-  }
-  .intro-names {
-    width: auto;
+  .intro-title p,
+  .intro-names h2,
+  .intro-names .date {
+    color: #f8ecd0;
+    text-shadow: 0 2px 10px rgb(0 0 0 / 0.55);
   }
   .intro-names h2 {
-    font-size: 2.3rem;
-    color: #f8ecd0;
-    text-shadow: 0 2px 12px rgb(0 0 0 / 0.5);
-  }
-  .intro-names .date {
-    font-size: 1rem;
-    color: #f3e3c0;
-    text-shadow: none;
+    font-size: 2.2rem;
   }
   .intro-open {
     width: 15.5rem;
   }
-  .intro-open .label {
-    font-size: 0.85rem;
+}
+
+/* wide screens: the envelope sits mid-frame, the lettering lower and smaller */
+@media (min-aspect-ratio: 13/10) and (min-height: 561px) {
+  .intro-title {
+    top: calc(env(safe-area-inset-top) + 5vh);
+  }
+  .intro-names {
+    bottom: calc(env(safe-area-inset-bottom) + 17vh);
+  }
+  .intro-names h2 {
+    font-size: clamp(2rem, 5vh, 3.2rem);
+  }
+  .intro-open {
+    width: min(40vw, 17rem);
+    bottom: calc(env(safe-area-inset-bottom) + 2.5vh);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .intro-rays,
-  .intro-flame,
-  .intro-open .pulse {
+  .intro-open .pulse,
+  .intro-loader__mono {
     animation: none;
   }
 }

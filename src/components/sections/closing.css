@@ -1,0 +1,184 @@
+/* Closing — Reference B screen 9 */
+.closing {
+  position: relative;
+  scroll-margin-top: var(--header-h);
+  background: var(--color-forest);
+}
+.closing__scene {
+  min-height: min(100svh, 860px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: calc(var(--section-pad-y) + 0.5rem) 1.25rem 44svh;
+  background: #3a2440;
+}
+.closing__bg img {
+  object-position: 50% 100%;
+}
+/* the sky darkens toward the top, where the blessing sits */
+.closing__veil {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(80% 40% at 50% 22%, rgb(30 16 36 / 0.55), rgb(30 16 36 / 0) 75%),
+    linear-gradient(0deg, rgb(10 39 29 / 0.9) 0%, rgb(10 39 29 / 0) 18%);
+}
+.closing__content {
+  position: relative;
+  z-index: 2;
+  max-width: 36rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #fbeed4;
+}
+.closing__blessing {
+  font-family: var(--font-script);
+  font-size: clamp(2rem, 8vw, 2.8rem);
+  line-height: 1.1;
+  color: #f2d48a;
+  text-shadow: 0 2px 14px rgb(20 8 20 / 0.6);
+}
+.closing__names {
+  margin-top: 0.3rem;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(2.3rem, 9vw, 3.8rem);
+  line-height: 1.1;
+  color: #fff6e6;
+  text-shadow: 0 2px 18px rgb(20 8 20 / 0.65);
+}
+.closing__names span {
+  font-style: italic;
+  font-size: 0.72em;
+  color: #f2d48a;
+}
+.closing__date {
+  margin-top: 0.4rem;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(1.1rem, 4vw, 1.3rem);
+  color: #f6e7c8;
+  text-shadow: 0 1px 10px rgb(20 8 20 / 0.7);
+}
+.closing__rule {
+  margin-top: 0.5rem;
+  color: #e6c675;
+}
+.closing__message {
+  margin-top: 0.6rem;
+  font-size: clamp(1rem, 3.6vw, 1.12rem);
+  line-height: 1.6;
+  color: #f8ead0;
+  text-shadow: 0 1px 10px rgb(20 8 20 / 0.75);
+}
+.closing__actions {
+  margin-top: 1.3rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
+.closing__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.9rem;
+  padding: 0 1.2rem;
+  border-radius: 999px;
+  font-family: var(--font-caps);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #fbeed4;
+  background: rgb(20 10 24 / 0.45);
+  box-shadow: inset 0 0 0 1px rgb(240 212 140 / 0.7);
+  transition: background-color var(--dur-base) var(--ease-silk);
+}
+.closing__btn:hover {
+  background: rgb(20 10 24 / 0.65);
+}
+.closing__btn--primary {
+  color: var(--color-gold-pale);
+  background: linear-gradient(180deg, #92283a, var(--color-maroon-deep));
+}
+.closing__btn--primary:hover {
+  background: linear-gradient(180deg, #a02f42, var(--color-maroon-deep));
+}
+
+/* the footer band */
+.closing__footer {
+  position: relative;
+  padding: 2.2rem 1.25rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  color: var(--color-gold-pale);
+  background:
+    radial-gradient(60% 120% at 50% 0%, rgb(40 100 74 / 0.5), transparent 70%),
+    linear-gradient(180deg, var(--color-emerald-deep), var(--color-forest));
+  box-shadow: inset 0 1px 0 rgb(233 207 134 / 0.45);
+}
+.closing__crest {
+  display: inline-grid;
+  place-items: center;
+  width: 3.6rem;
+  height: 3.6rem;
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 0 1px rgb(233 207 134 / 0.75),
+    inset 0 0 0 4px rgb(12 52 39 / 1),
+    inset 0 0 0 5px rgb(233 207 134 / 0.4);
+}
+.closing__mono span {
+  color: var(--color-gold-pale) !important;
+}
+.closing__footer-names {
+  margin-top: 0.6rem;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+}
+.closing__made {
+  margin-top: 0.2rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.92rem;
+  color: rgb(240 219 160 / 0.85);
+}
+.closing__heart {
+  width: 0.95rem;
+  height: 0.95rem;
+  color: #e46a7c;
+}
+.closing__top {
+  margin-top: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  border-radius: 999px;
+  font-family: var(--font-caps);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-gold-pale);
+}
+.closing__top:hover {
+  color: #fff6e6;
+}
+@media (min-aspect-ratio: 1/1) {
+  .closing__scene {
+    padding-top: calc(var(--header-h) + 2.5rem);
+    padding-bottom: 38vh;
+  }
+  .closing__bg img {
+    object-position: 50% 100%;
+  }
+}

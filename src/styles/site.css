@@ -1,0 +1,206 @@
+/* ==================================================================
+   Shared surfaces and scene scaffolding for the main website
+   (Reference B): parchment cards, gold frames, painted section scenes.
+=================================================================== */
+
+/* ---------------------------------------------------------------- parchment frame */
+.ornate-frame {
+  position: relative;
+  border-radius: 14px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgb(255 253 246 / 0.75), transparent 60%),
+    url('/site/parchment.webp') center / 320px repeat,
+    #f6ead2;
+  box-shadow:
+    inset 0 0 0 1px rgb(185 138 46 / 0.75),
+    inset 0 0 0 5px rgb(255 250 238 / 0.85),
+    inset 0 0 0 6px rgb(185 138 46 / 0.45),
+    inset 0 0 34px rgb(170 120 50 / 0.16),
+    0 26px 50px -30px rgb(60 38 12 / 0.55),
+    0 4px 14px -6px rgb(60 38 12 / 0.25);
+  color: var(--color-ink);
+}
+.ornate-frame--emerald {
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgb(56 120 92 / 0.55), transparent 60%),
+    linear-gradient(180deg, #164c39, #0d3427);
+  box-shadow:
+    inset 0 0 0 1px rgb(233 207 134 / 0.85),
+    inset 0 0 0 5px rgb(14 52 39 / 0.9),
+    inset 0 0 0 6px rgb(233 207 134 / 0.5),
+    0 26px 50px -30px rgb(10 30 20 / 0.7);
+  color: var(--color-gold-pale);
+}
+.ornate-frame__corner {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  color: var(--color-gold);
+  pointer-events: none;
+}
+.ornate-frame--emerald .ornate-frame__corner {
+  color: #e2c77d;
+}
+.ornate-frame__corner--tl {
+  top: 6px;
+  left: 6px;
+}
+.ornate-frame__corner--tr {
+  top: 6px;
+  right: 6px;
+  transform: scaleX(-1);
+}
+.ornate-frame__corner--bl {
+  bottom: 6px;
+  left: 6px;
+  transform: scaleY(-1);
+}
+.ornate-frame__corner--br {
+  bottom: 6px;
+  right: 6px;
+  transform: scale(-1, -1);
+}
+
+/* ---------------------------------------------------------------- laurel monogram */
+.laurel-monogram {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 9.5rem;
+  aspect-ratio: 200 / 150;
+}
+.laurel-monogram__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.laurel-monogram__letters {
+  position: relative;
+  margin-top: 10%;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.85rem;
+  line-height: 1;
+  color: var(--color-emerald-deep);
+  letter-spacing: -0.01em;
+}
+.laurel-monogram__letters span {
+  font-style: italic;
+  font-size: 0.62em;
+  color: var(--color-gold-deep);
+  margin-inline: 0.04em;
+}
+
+/* ---------------------------------------------------------------- painted scenes */
+.scene {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.scene__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+}
+.scene__bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* blend each painted scene softly into the ivory page above and below */
+.scene__veil {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.scene--fade-top::before,
+.scene--fade-bottom::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 7rem;
+  z-index: -1;
+  pointer-events: none;
+}
+.scene--fade-top::before {
+  top: 0;
+  background: linear-gradient(180deg, var(--color-ivory), rgb(251 246 236 / 0));
+}
+.scene--fade-bottom::after {
+  bottom: 0;
+  background: linear-gradient(0deg, var(--color-ivory), rgb(251 246 236 / 0));
+}
+
+.decor {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* section titles in Reference B */
+.title-caps {
+  font-family: var(--font-caps);
+  font-weight: 500;
+  font-size: clamp(1.45rem, 5.4vw, 2.2rem);
+  letter-spacing: 0.2em;
+  margin-right: -0.2em;
+  color: var(--color-emerald-deep);
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+.title-script {
+  font-family: var(--font-script);
+  font-weight: 400;
+  font-size: clamp(2.9rem, 11vw, 4.6rem);
+  line-height: 1.05;
+  color: var(--color-maroon);
+}
+.title-lead {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(1.1rem, 3.6vw, 1.3rem);
+  color: var(--color-ink-soft);
+}
+.eyebrow-caps {
+  font-family: var(--font-caps);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  margin-right: -0.28em;
+  text-transform: uppercase;
+  color: var(--color-gold-deep);
+}
+
+/* ---------------------------------------------------------------- section reveals
+   Content rises softly into place the first time a section comes into view
+   (see useReveal). Without JavaScript, or with reduced motion, everything is
+   simply shown. */
+.js-reveal [data-reveal] {
+  opacity: 0;
+  translate: 0 18px;
+  transition:
+    opacity 900ms var(--ease-silk),
+    translate 900ms var(--ease-silk);
+}
+.js-reveal [data-reveal='1'] {
+  transition-delay: 140ms;
+}
+.js-reveal [data-reveal='2'] {
+  transition-delay: 280ms;
+}
+.js-reveal .is-revealed [data-reveal],
+.js-reveal [data-reveal].is-revealed {
+  opacity: 1;
+  translate: 0 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .js-reveal [data-reveal] {
+    opacity: 1;
+    translate: none;
+    transition: none;
+  }
+}

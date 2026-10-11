@@ -1,0 +1,336 @@
+/* Site header and menu */
+.site-header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 40;
+  transition:
+    background-color var(--dur-slow) var(--ease-silk),
+    box-shadow var(--dur-slow) var(--ease-silk);
+}
+/* over the hero, a soft ivory fade keeps the links legible against the archway */
+.site-header::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 -1.6rem;
+  background: linear-gradient(180deg, rgb(251 246 236 / 0.78), rgb(251 246 236 / 0.4) 60%, rgb(251 246 236 / 0));
+  pointer-events: none;
+  transition: opacity var(--dur-slow) var(--ease-silk);
+}
+.site-header--scrolled::before {
+  opacity: 0;
+}
+.site-header--scrolled {
+  background: rgb(251 246 236 / 0.92);
+  box-shadow:
+    0 1px 0 rgb(185 138 46 / 0.35),
+    0 12px 30px -22px rgb(58 42 27 / 0.55);
+}
+.site-header__bar {
+  /* stays above the open menu, so the menu button becomes its close button in place */
+  position: relative;
+  z-index: 60;
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.site-header__brand {
+  flex-shrink: 0;
+  border-radius: 999px;
+}
+
+/* the main sections, on wide screens */
+.site-header__nav {
+  display: none;
+}
+.site-header__nav ul {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+.site-header__nav a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 0.7rem;
+  font-family: var(--font-caps);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-emerald-deep);
+  white-space: nowrap;
+  transition: color var(--dur-base) var(--ease-silk);
+}
+/* a small gold lotus-bud underline for the current section */
+.site-header__nav a::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0.45rem;
+  width: 1.6rem;
+  height: 2px;
+  margin-left: -0.8rem;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+  opacity: 0;
+  transform: scaleX(0.4);
+  transition:
+    opacity var(--dur-base) var(--ease-silk),
+    transform var(--dur-base) var(--ease-silk);
+}
+.site-header__nav a:hover {
+  color: var(--color-gold-deep);
+}
+.site-header__nav a[aria-current='true'] {
+  color: var(--color-maroon);
+}
+.site-header__nav a[aria-current='true']::after,
+.site-header__nav a:hover::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+.site-header__wide {
+  display: none;
+}
+
+.site-header__end {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.site-header__rsvp {
+  display: none;
+  align-items: center;
+  min-height: 2.6rem;
+  padding: 0 1.15rem;
+  border-radius: 999px;
+  font-family: var(--font-caps);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--color-gold-pale);
+  background: linear-gradient(180deg, #8c2434, var(--color-maroon));
+  box-shadow:
+    inset 0 0 0 1px rgb(240 219 160 / 0.55),
+    0 8px 18px -10px rgb(90 20 30 / 0.8);
+  transition: filter var(--dur-base) var(--ease-silk);
+}
+.site-header__rsvp:hover {
+  filter: brightness(1.1);
+}
+.site-header__menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  color: var(--color-emerald-deep);
+  background: rgb(251 246 236 / 0.85);
+  box-shadow:
+    inset 0 0 0 1px rgb(185 138 46 / 0.6),
+    0 6px 16px -10px rgb(58 42 27 / 0.6);
+}
+
+@media (min-width: 640px) {
+  .site-header__rsvp {
+    display: inline-flex;
+  }
+}
+@media (min-width: 1024px) {
+  .site-header__nav {
+    display: block;
+  }
+}
+@media (min-width: 1360px) {
+  .site-header__wide {
+    display: list-item;
+  }
+}
+
+/* ---------------------------------------------------------------- the menu */
+.site-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+}
+.site-menu__scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgb(20 12 6 / 0.45);
+  animation: menu-fade var(--dur-base) var(--ease-silk) both;
+}
+.site-menu__panel {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  padding: calc(var(--header-h) + 0.5rem) 1.5rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgb(255 253 246 / 0.9), transparent 70%),
+    url('/site/parchment.webp') center / 320px repeat,
+    var(--color-ivory);
+  animation: menu-in var(--dur-slow) var(--ease-silk) both;
+}
+.site-menu__head {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+.site-menu__names {
+  margin-top: 0.4rem;
+  font-family: var(--font-script);
+  font-size: 2.3rem;
+  line-height: 1.15;
+  color: var(--color-emerald-deep);
+}
+.site-menu__names span {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.7em;
+  color: var(--color-gold-deep);
+}
+.site-menu__rule {
+  width: 9rem;
+  margin-top: 0.2rem;
+}
+.site-menu__date {
+  margin-top: 0.35rem;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.05rem;
+  color: #4a3826;
+}
+.site-menu__list {
+  margin-top: 1.4rem;
+  width: min(100%, 22rem);
+  display: grid;
+  gap: 0.15rem;
+}
+.site-menu__list a {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-height: 3rem;
+  padding: 0 1rem;
+  border-radius: 0.75rem;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: var(--color-emerald-deep);
+  transition:
+    background-color var(--dur-base) var(--ease-silk),
+    color var(--dur-base) var(--ease-silk);
+}
+.site-menu__list a:hover {
+  background: rgb(232 211 168 / 0.45);
+}
+.site-menu__list a[aria-current='true'] {
+  color: var(--color-maroon);
+  background: rgb(232 211 168 / 0.35);
+}
+.site-menu__num {
+  font-family: var(--font-caps);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  color: var(--color-gold-deep);
+}
+.site-menu__close {
+  margin-top: 1.4rem;
+  min-height: 2.75rem;
+  padding: 0 1.4rem;
+  border-radius: 999px;
+  font-family: var(--font-caps);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-emerald-deep);
+  box-shadow: inset 0 0 0 1px rgb(185 138 46 / 0.6);
+}
+@media (min-width: 640px) {
+  .site-menu__panel {
+    inset: 0 0 0 auto;
+    width: min(26rem, 100%);
+    box-shadow: -30px 0 60px -30px rgb(40 24 10 / 0.6);
+    animation-name: menu-slide;
+  }
+}
+@keyframes menu-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.75rem);
+  }
+}
+@keyframes menu-slide {
+  from {
+    opacity: 0;
+    transform: translateX(2rem);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-menu__scrim,
+  .site-menu__panel {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------- language switch */
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgb(251 246 236 / 0.85);
+  box-shadow:
+    inset 0 0 0 1px rgb(185 138 46 / 0.55),
+    0 6px 16px -10px rgb(58 42 27 / 0.55);
+}
+.lang-switch button {
+  min-height: 2.25rem;
+  min-width: 2.4rem;
+  padding: 0 0.6rem;
+  border-radius: 999px;
+  font-family: var(--font-caps);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--color-emerald-deep);
+  transition:
+    background-color var(--dur-base) var(--ease-silk),
+    color var(--dur-base) var(--ease-silk);
+}
+.lang-switch button[lang='kn'],
+.lang-switch button[lang='hi'] {
+  font-size: 0.82rem;
+  /* the device's own Kannada / Devanagari font: the site's script fonts load only when a language is chosen */
+  font-family: 'Nirmala UI', 'Noto Sans Kannada', 'Noto Sans Devanagari', 'Kohinoor Devanagari', 'Kannada Sangam MN', system-ui, sans-serif;
+}
+.lang-switch button:hover {
+  background: rgb(232 211 168 / 0.5);
+}
+.lang-switch button[aria-pressed='true'] {
+  color: var(--color-gold-pale);
+  background: linear-gradient(180deg, #17553f, var(--color-emerald-deep));
+  box-shadow: inset 0 0 0 1px rgb(240 219 160 / 0.5);
+}
+.site-menu__lang {
+  margin-top: 1.1rem;
+}
+/* the narrowest phones: the switch moves into the menu */
+@media (max-width: 359px) {
+  .site-header__lang {
+    display: none;
+  }
+}

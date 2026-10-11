@@ -8,9 +8,33 @@
     <meta name="theme-color" content="#0c3427" />
     <meta name="color-scheme" content="light" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- the hero scene, discovered before the app runs (one framing per screen shape) -->
+    <link rel="preload" as="image" href="/site/hero-wide.webp" media="(min-aspect-ratio: 1/1)" fetchpriority="high" />
+    <link rel="preload" as="image" href="/site/hero-tablet.webp" media="(min-aspect-ratio: 3/5) and (max-aspect-ratio: 1/1)" fetchpriority="high" />
+    <link rel="preload" as="image" href="/site/hero-tall.webp" media="(max-aspect-ratio: 3/5)" fetchpriority="high" />
+    <style>
+      /* a first paint before the app arrives: the intro's dark hall on a first visit, ivory on a return */
+      .splash { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 14px; font-family: Georgia, 'Times New Roman', serif; background: #fbf6ec; color: #134d3a; }
+      html.splash-intro .splash { background: radial-gradient(90% 70% at 50% 40%, #4a2a12 0%, #1f1007 60%, #120904 100%); color: #f3dda0; }
+      .splash b { font-weight: 400; font-size: 42px; letter-spacing: 0.02em; }
+      .splash i { font-size: 30px; margin: 0 4px; color: #b98a2e; }
+      .splash small { font-size: 12px; letter-spacing: 0.24em; text-transform: uppercase; opacity: 0.8; }
+    </style>
+    <script>
+      ;(function () {
+        try {
+          var seen = sessionStorage.getItem('w2:intro') === 'seen'
+          var p = new URLSearchParams(location.search)
+          var intro = p.has('intro') || (!p.has('nointro') && !(location.hash && location.hash !== '#home') && !seen)
+          if (intro) document.documentElement.classList.add('splash-intro')
+        } catch (e) {
+          document.documentElement.classList.add('splash-intro')
+        }
+      })()
+    </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="splash" aria-hidden="true"><b>D<i>&amp;</i>V</b><small>Darshan &amp; Vathsala</small></div></div>
     <noscript>
       <p style="font-family: Georgia, serif; text-align: center; padding: 3rem 1.5rem; color: #3a2a1b">
         Darshan &amp; Vathsala — 15 &amp; 16 November 2026 · Bapuji Samudhaya Bhavan, Shamanur Road, Siddaveerappa Layout, Shamanur,

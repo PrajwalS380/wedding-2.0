@@ -27,7 +27,7 @@ for (const vp of sizes) {
   const ctx = await newContext(browser, vp)
   const page = await ctx.newPage()
   await page.goto(BASE + '/?intro', { waitUntil: 'networkidle' })
-  await page.waitForFunction(() => document.querySelector('.intro')?.dataset.state === 'ready', null, { timeout: 10000 })
+  await page.waitForFunction(() => document.querySelector('.intro')?.dataset.state === 'ready', null, { timeout: 30000 })
   await page.waitForTimeout(1200)
   // best of two readings: the very first second after start-up includes GPU / image-decode warm-up
   const idle = Math.max(await fps(page), await fps(page))

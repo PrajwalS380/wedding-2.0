@@ -29,9 +29,9 @@ for (const vp of VIEWPORTS.filter((v) => !only.length || only.includes(v.name)))
   for (const id of sections) {
     await page.evaluate((i) => {
       const el = document.getElementById(i)
-      if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - (i === 'home' ? 0 : 0))
+      if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY, behavior: 'instant' })
     }, id)
-    await page.waitForTimeout(900)
+    await page.waitForTimeout(1400)
     await page.screenshot({ path: path.join(OUT, `${vp.name}-${id}${lang ? '-' + lang : ''}.png`) })
   }
   await ctx.close()

@@ -1,0 +1,69 @@
+/* Fireworks layers inside the closing scene (above the backdrop, below the words) */
+.fireworks {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.fireworks canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* night falls over the garden while the fireworks play */
+.fireworks__night {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: linear-gradient(180deg, rgb(8 6 28 / 0.82) 0%, rgb(18 10 40 / 0.66) 45%, rgb(20 10 30 / 0.4) 75%, rgb(10 20 16 / 0.3) 100%);
+  transition: opacity 2.4s var(--ease-silk);
+}
+.fireworks.is-night .fireworks__night {
+  opacity: 1;
+  transition-duration: 1.4s;
+}
+/* the sky layer sinks behind the palace roofline */
+.fireworks__sky {
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 56%, transparent 66%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 56%, transparent 66%);
+}
+/* each burst lights the sky and the palace in its colour */
+.fireworks__flash {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(60% 55% at var(--fx, 50%) var(--fy, 25%), rgb(var(--fc, 255 200 120) / 0.55), rgb(var(--fc, 255 200 120) / 0.12) 55%, transparent 80%);
+  mix-blend-mode: screen;
+}
+
+.fireworks__replay {
+  margin-top: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.75rem;
+  padding: 0 1.1rem;
+  border-radius: 999px;
+  font-family: var(--font-caps);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #f6dfa0;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px rgb(240 212 140 / 0.45);
+  transition:
+    background-color var(--dur-base) var(--ease-silk),
+    opacity var(--dur-base) var(--ease-silk);
+}
+.fireworks__replay:hover:not(:disabled) {
+  background: rgb(20 10 24 / 0.4);
+}
+.fireworks__replay:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+.fireworks__replay span {
+  color: #ffd76e;
+}

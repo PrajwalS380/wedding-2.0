@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { RoyalIntro } from '../components/intro/RoyalIntro'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { FloralDefs } from '../components/decor/FloralDefs'
+import { IntroShell } from '../components/intro/IntroShell'
 import { SiteHeader } from '../components/layout/SiteHeader'
 import { CalendarSection } from '../components/sections/CalendarSection'
 import { CelebrationsSection } from '../components/sections/CelebrationsSection'
@@ -11,6 +12,14 @@ import { InvitationSection } from '../components/sections/InvitationSection'
 import { RsvpSection } from '../components/sections/RsvpSection'
 import { VenueSection } from '../components/sections/VenueSection'
 import { readStorage, writeStorage } from '../lib/browser'
+import { SelectedDayProvider } from '../state/selectedDay'
+import { ToastProvider } from '../components/ui/Toast'
+import { MusicProvider } from '../components/music/MusicProvider'
+import { useI18n } from '../i18n/useI18n'
+import { useReveal } from '../hooks/useReveal'
+
+// the intro (with its animation library and 3D scene) is its own chunk: returning visitors never download it
+const RoyalIntro = lazy(() => import('../components/intro/RoyalIntro').then((m) => ({ default: m.RoyalIntro })))
 
 const INTRO_KEY = 'w2:intro'
 
@@ -29,6 +38,8 @@ function shouldShowIntro(): boolean {
 }
 
 export function App() {
+  const { t } = useI18n()
+  useReveal()
   const [introOpen, setIntroOpen] = useState(shouldShowIntro)
   const focusHero = useRef(false)
 
@@ -49,9 +60,12 @@ export function App() {
   }, [])
 
   return (
-    <>
+    <SelectedDayProvider>
+      <ToastProvider>
+      <MusicProvider>
+      <FloralDefs />
       <a href="#main" className="sr-only-focusable fixed left-3 top-3 z-[60] rounded-full bg-emerald px-4 py-2 text-gold-pale">
-        Skip to content
+        {t.skipToContent}
       </a>
       <div inert={introOpen || undefined}>
         <SiteHeader />
@@ -67,7 +81,13 @@ export function App() {
         </main>
         <ClosingSection />
       </div>
-      {introOpen && <RoyalIntro onComplete={completeIntro} />}
-    </>
+      {introOpen && (
+        <Suspense fallback={<IntroShell />}>
+          <RoyalIntro onComplete={completeIntro} />
+        </Suspense>
+      )}
+      </MusicProvider>
+      </ToastProvider>
+    </SelectedDayProvider>
   )
 }

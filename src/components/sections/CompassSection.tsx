@@ -1,38 +1,61 @@
-import type { MouseEvent } from 'react'
+import { useState, type MouseEvent } from 'react'
+import { useI18n } from '../../i18n/useI18n'
 import { scrollToSection } from '../../lib/browser'
-import { SectionHeading } from '../ui/SectionHeading'
+import { CompassDial } from '../decor/CompassDial'
+import { CalendarIcon, GuestsIcon, MapPin, ScrollIcon } from '../ui/icons'
+import './compass.css'
+import { SceneBackdrop } from '../decor/SceneBackdrop'
+import { FloralFrame } from '../decor/FloralFrame'
 
 const DESTINATIONS = [
-  { dir: 'North', target: 'invitation', label: 'The Invitation' },
-  { dir: 'East', target: 'celebrations', label: 'The Schedule' },
-  { dir: 'West', target: 'guest-services', label: 'Guest Services' },
-  { dir: 'South', target: 'venue', label: 'The Venue' },
+  { dir: 'north', heading: 0, target: 'invitation', label: 'invitation', Icon: ScrollIcon },
+  { dir: 'east', heading: 90, target: 'celebrations', label: 'schedule', Icon: CalendarIcon },
+  { dir: 'west', heading: 270, target: 'guest-services', label: 'services', Icon: GuestsIcon },
+  { dir: 'south', heading: 180, target: 'venue', label: 'venue', Icon: MapPin },
 ] as const
 
-/** The Wedding Compass — four directions, four destinations on this page. */
+/** The Wedding Compass (Reference B, screen 4): a gold compass and four destinations on this page. */
 export function CompassSection() {
+  const { t } = useI18n()
+  const [heading, setHeading] = useState(0)
   const go = (id: string) => (e: MouseEvent) => {
     e.preventDefault()
     scrollToSection(id)
   }
   return (
-    <section id="compass" aria-labelledby="compass-title" className="section bg-ivory-warm">
-      <div className="container-content">
-        <SectionHeading id="compass" eyebrow="The wedding" title="Compass" scriptTitle lead="Choose a direction to explore our wedding details." />
-        <div aria-hidden="true" className="mx-auto mt-10 grid h-56 w-56 place-items-center rounded-full border-4 border-gold bg-emerald text-gold-pale shadow-[var(--shadow-float)]">
-          <span className="caps text-[0.9rem]">N · E · S · W</span>
+    <section id="compass" aria-labelledby="compass-title" className="compass scene scene--fade-top scene--fade-bottom">
+      <SceneBackdrop className="compass__bg" />
+      <div className="compass__veil" aria-hidden="true" />
+      <FloralFrame />
+      <img className="decor compass__garland compass__garland--l" src="/site/strand.webp" alt="" loading="lazy" />
+      <img className="decor compass__garland compass__garland--r" src="/site/strand.webp" alt="" loading="lazy" />
+
+      <header data-reveal="0" className="compass__head">
+        <h2 id="compass-title" className="compass__title">
+          <span className="title-caps">{t.compass.title1}</span>
+          <span className="compass__script">{t.compass.title2}</span>
+        </h2>
+        <p className="compass__lead">{t.compass.lead}</p>
+      </header>
+
+      <div className="compass__layout">
+        <div data-reveal="1" className="compass__dial-wrap">
+          <CompassDial className="compass__dial" heading={heading} />
         </div>
-        <nav aria-label="Wedding compass" className="mx-auto mt-10 max-w-md">
-          <ul className="grid grid-cols-2 gap-4">
-            {DESTINATIONS.map((d) => (
-              <li key={d.dir}>
+        <nav aria-label={t.compass.nav} data-reveal="2" className="compass__nav">
+          <ul className="compass__tiles">
+            {DESTINATIONS.map(({ dir, heading: h, target, label, Icon }) => (
+              <li key={dir}>
                 <a
-                  href={`#${d.target}`}
-                  onClick={go(d.target)}
-                  className="flex min-h-28 flex-col items-center justify-center rounded-2xl border border-gold/50 bg-ivory p-4 text-center shadow-[var(--shadow-card)] transition-colors hover:bg-parchment/60"
+                  href={`#${target}`}
+                  className={`compass-tile ${heading === h ? 'is-active' : ''}`}
+                  onClick={go(target)}
+                  onPointerEnter={() => setHeading(h)}
+                  onFocus={() => setHeading(h)}
                 >
-                  <span className="caps text-[0.75rem] text-gold-deep">{d.dir}</span>
-                  <span className="mt-1 font-display text-[1.2rem] text-emerald-deep">{d.label}</span>
+                  <Icon className="compass-tile__icon" />
+                  <span className="compass-tile__dir">{t.compass.dirs[dir]}</span>
+                  <span className="compass-tile__label">{t.compass.dest[label]}</span>
                 </a>
               </li>
             ))}

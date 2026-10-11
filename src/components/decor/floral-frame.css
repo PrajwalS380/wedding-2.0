@@ -1,0 +1,28 @@
+.floral-frame {
+  position: absolute;
+  inset: 0;
+  /* above the backdrop and its veil, beneath the words and cards */
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+.floral-frame__corner {
+  position: absolute;
+  top: calc(var(--header-h) - 1.4rem);
+  width: clamp(90px, 22vw, 280px);
+  height: auto;
+  filter: drop-shadow(0 12px 14px rgb(60 30 14 / 0.22));
+}
+.floral-frame__corner--tl {
+  left: -2%;
+}
+.floral-frame__corner--tr {
+  right: -2%;
+  transform: scaleX(-1);
+}
+@media (min-width: 900px) {
+  .floral-frame__corner {
+    top: calc(var(--header-h) - 2.4rem);
+    width: clamp(240px, 22vw, 400px);
+  }
+}

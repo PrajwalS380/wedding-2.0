@@ -1,11 +1,14 @@
-// Royal intro behaviour: assets, opening sequence, skip, repeated input, session, layout, motion, keyboard, failures.
+// Royal intro behaviour (live 3D scene): rendering, opening sequence, skip, repeated input, session,
+// layout, reduced motion, keyboard, and the fallbacks for no WebGL / a lost GPU context.
+// Needs the dev server (reads the dev-only hooks __introTimeline, __introWorld, __envelopeRect).
 // Usage: node tests/e2e/intro.mjs [baseUrl]
 import { BASE, VIEWPORTS, launch, newContext, overflowX, reporter, watchErrors } from './lib.mjs'
 
 const { ok, done } = reporter('INTRO')
 const browser = await launch()
+const { PNG } = await import('pngjs')
 
-const introGone = (page, timeout = 9000) =>
+const introGone = (page, timeout = 12000) =>
   page
     .getByRole('dialog')
     .waitFor({ state: 'detached', timeout })
@@ -15,30 +18,48 @@ const pageUsable = (page) =>
   page.evaluate(() => !document.querySelector('[inert]') && !document.documentElement.classList.contains('is-locked') && window.scrollY === 0)
 
 async function ready(page) {
-  await page.waitForFunction(() => document.querySelector('.intro')?.dataset.state === 'ready', null, { timeout: 10000 })
-  await page.waitForTimeout(950) // fade-in
+  await page.waitForFunction(() => document.querySelector('.intro')?.dataset.state === 'ready', null, { timeout: 30000 })
+  // the fade-in can stretch while shaders compile (GSAP lag smoothing): wait for the lettering itself
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('.intro-text')).opacity === '1', null, { timeout: 15000 })
 }
+
+/** Luminance spread across the screen: a painted scene, not a blank or single-colour canvas. */
+async function sceneSpread(page) {
+  const png = PNG.sync.read(await page.screenshot())
+  const vals = []
+  for (let y = 4; y < png.height; y += 9)
+    for (let x = 4; x < png.width; x += 9) {
+      const i = (y * png.width + x) * 4
+      vals.push(0.2126 * png.data[i] + 0.7152 * png.data[i + 1] + 0.0722 * png.data[i + 2])
+    }
+  const mean = vals.reduce((a, b) => a + b, 0) / vals.length
+  return Math.sqrt(vals.reduce((a, b) => a + (b - mean) ** 2, 0) / vals.length)
+}
+
+const atTime = (page, t) => page.waitForFunction((tt) => (window.__introTimeline?.time() ?? 0) >= tt, t, { timeout: 10000 }).catch(() => {})
 
 for (const vp of VIEWPORTS) {
   const ctx = await newContext(browser, vp)
   const page = await ctx.newPage()
   const errors = watchErrors(page)
-  const introAssets = []
-  page.on('response', (r) => r.url().includes('/intro/') && introAssets.push([r.url().split('/').pop(), r.status()]))
+  const failed = []
+  page.on('response', (r) => r.status() >= 400 && failed.push(`${r.status()} ${r.url()}`))
   await page.goto(BASE + '/', { waitUntil: 'networkidle' })
   await ready(page)
 
-  ok(`[${vp.name}] intro assets load (no missing files)`, introAssets.length >= 10 && introAssets.every(([, s]) => s === 200 || s === 304), introAssets.filter(([, s]) => s >= 400))
+  const scene = await page.evaluate(() => ({ canvas: !!document.querySelector('.intro-scene canvas'), flat: document.querySelector('.intro')?.classList.contains('intro--flat') }))
+  ok(`[${vp.name}] the WebGL scene is live (no fallback)`, scene.canvas && !scene.flat, scene)
+  const spread = await sceneSpread(page)
+  ok(`[${vp.name}] the scene is painted (luminance spread ${spread.toFixed(0)})`, spread > 25)
+  ok(`[${vp.name}] no failed requests`, failed.length === 0, failed.slice(0, 3))
   ok(`[${vp.name}] no horizontal overflow`, (await overflowX(page)) <= 0)
 
-  // text must not overlap itself, the envelope, or the button, and must stay on screen
+  // lettering must not overlap itself, the envelope, or the controls, and must stay on screen
   const boxes = await page.evaluate(() => {
     const r = (sel) => {
       const b = document.querySelector(sel)?.getBoundingClientRect()
       return b && { l: b.left, r: b.right, t: b.top, b: b.bottom }
     }
-    // the envelope's visible body: pocket image box minus the pedestal (lower ~28%)
-    const pocket = r('img[src*="envelope-pocket"]')
     return {
       vw: innerWidth,
       vh: innerHeight,
@@ -47,35 +68,41 @@ for (const vp of VIEWPORTS) {
       date: r('#intro-date'),
       button: r('.intro-open'),
       skip: r('.intro-skip'),
-      envelope: pocket && { ...pocket, b: pocket.t + (pocket.b - pocket.t) * 0.72 },
+      envelope: window.__envelopeRect?.() ?? null,
     }
   })
   const overlap = (a, b, tol = 2) => a && b && a.l < b.r - tol && b.l < a.r - tol && a.t < b.b - tol && b.t < a.b - tol
   const inView = (a) => a && a.l >= 0 && a.r <= boxes.vw && a.t >= 0 && a.b <= boxes.vh
   ok(`[${vp.name}] title, names, date, button and skip are fully on screen`, ['title', 'names', 'date', 'button', 'skip'].every((k) => inView(boxes[k])), boxes)
+  ok(`[${vp.name}] the envelope is on screen`, !!boxes.envelope && boxes.envelope.t >= 0 && boxes.envelope.b <= boxes.vh && boxes.envelope.l >= -2 && boxes.envelope.r <= boxes.vw + 2, boxes.envelope)
   ok(
-    `[${vp.name}] no overlaps between names / date / button / envelope / skip`,
-    !overlap(boxes.names, boxes.date) && !overlap(boxes.date, boxes.button) && !overlap(boxes.names, boxes.envelope) && !overlap(boxes.skip, boxes.title),
+    `[${vp.name}] no overlaps between title / names / date / button / envelope / skip`,
+    ['title', 'names', 'date', 'button'].every((k) => !overlap(boxes[k], boxes.envelope)) &&
+      !overlap(boxes.names, boxes.date) &&
+      !overlap(boxes.date, boxes.button) &&
+      !overlap(boxes.skip, boxes.title),
+    boxes,
   )
   const sizes = await page.evaluate(() => ['#intro-names', '#intro-date', '.intro-open .label', '.intro-title p', '.intro-skip'].map((s) => parseFloat(getComputedStyle(document.querySelector(s)).fontSize)))
   ok(`[${vp.name}] readable text sizes (names ≥ 28px, others ≥ 11px)`, sizes[0] >= 28 && sizes.slice(1).every((s) => s >= 11), sizes)
 
-  // the opening sequence
+  // the opening sequence, read at fixed points of its own timeline (not wall-clock)
   await page.getByRole('button', { name: /tap to open/i }).click()
-  // read the sequence at fixed points of its own timeline (dev builds expose it), not wall-clock
-  const atTime = (t) => page.waitForFunction((tt) => (window.__introTimeline?.time() ?? 0) >= tt, t, { timeout: 8000 }).catch(() => {})
-  await atTime(1.5)
-  const mid = await page.evaluate(() => ({
-    state: document.querySelector('.intro')?.dataset.state,
-    flap: getComputedStyle(document.querySelector('.intro-flap')).transform,
-    card: getComputedStyle(document.querySelector('.intro-card')).transform,
-  }))
-  ok(`[${vp.name}] tap opens the envelope: flap lifts, card rises`, mid.state === 'opening' && mid.flap.startsWith('matrix3d') && mid.card !== 'none', mid)
-  await atTime(2.3)
-  const doors = await page.evaluate(() => [...document.querySelectorAll('.intro-door')].map((d) => getComputedStyle(d).transform))
-  ok(`[${vp.name}] the palace doors swing open`, doors.length === 2 && doors.every((t) => t.startsWith('matrix3d')), doors.map((t) => t.slice(0, 30)))
+  await atTime(page, 1.5)
+  const mid = await page.evaluate(() => {
+    const w = window.__introWorld
+    return { state: document.querySelector('.intro')?.dataset.state, flap: w?.envelope?.flap.rotation.x, text: getComputedStyle(document.querySelector('.intro-text')).opacity }
+  })
+  ok(`[${vp.name}] tap opens the envelope (flap over its hinge, lettering faded)`, mid.state === 'opening' && mid.flap < -1.5 && Number(mid.text) < 0.05, mid)
+  await atTime(page, 2.6)
+  const later = await page.evaluate(() => {
+    const w = window.__introWorld
+    return { doorL: w?.doorL?.rotation.y, doorR: w?.doorR?.rotation.y, travel: w?.rig.travel }
+  })
+  ok(`[${vp.name}] the doors swing wide and the camera walks through`, later.doorL > 1.3 && later.doorR < -1.3 && later.travel > 0.3, later)
   ok(`[${vp.name}] sequence completes into the real website`, await introGone(page))
   ok(`[${vp.name}] hero visible, page usable, scrolled to top`, (await page.locator('#home-title').isVisible()) && (await pageUsable(page)))
+  ok(`[${vp.name}] the WebGL scene is released (its canvas leaves the page)`, await page.evaluate(() => !!window.__gl && !window.__gl.domElement.isConnected && !document.querySelector('.intro-scene')))
   ok(`[${vp.name}] no console / network errors`, errors.length === 0, errors.slice(0, 3))
 
   // skip from the idle state
@@ -105,8 +132,8 @@ for (const vp of VIEWPORTS) {
   const btn = page.getByRole('button', { name: /tap to open/i })
   for (let i = 0; i < 5; i++) await btn.click({ force: true, timeout: 1000 }).catch(() => {})
   await page.mouse.click(195, 500).catch(() => {}) // the envelope itself
-  const state = await page.evaluate(() => document.querySelector('.intro')?.dataset.state)
-  ok('repeated taps start exactly one sequence', state === 'opening', state)
+  const state = await page.evaluate(() => ({ s: document.querySelector('.intro')?.dataset.state, t: window.__introTimeline?.time() }))
+  ok('repeated taps start exactly one sequence', state.s === 'opening', state)
   ok('…which still completes cleanly', (await introGone(page)) && (await pageUsable(page)))
   await page.getByRole('button', { name: /skip intro/i }).click({ timeout: 500 }).catch(() => {})
   ok('no errors from repeated / late input', errors.length === 0, errors)
@@ -138,13 +165,13 @@ for (const vp of VIEWPORTS) {
   const ctx = await newContext(browser, VIEWPORTS[0], { reducedMotion: 'reduce' })
   const page = await ctx.newPage()
   await page.goto(BASE + '/?intro', { waitUntil: 'networkidle' })
-  await page.waitForFunction(() => document.querySelector('.intro')?.dataset.state === 'ready', null, { timeout: 10000 })
-  await page.waitForTimeout(300)
+  await page.waitForFunction(() => document.querySelector('.intro')?.dataset.state === 'ready', null, { timeout: 30000 })
+  await page.waitForTimeout(400)
   const t0 = Date.now()
   await page.getByRole('button', { name: /tap to open/i }).click()
   await page.waitForTimeout(250)
-  const cam = await page.evaluate(() => getComputedStyle(document.querySelector('.intro-camera')).transform)
-  ok('reduced motion: no camera movement', cam === 'none' || cam === 'matrix(1, 0, 0, 1, 0, 0)', cam)
+  const w = await page.evaluate(() => ({ travel: window.__introWorld?.rig.travel, door: window.__introWorld?.doorL?.rotation.y, flap: window.__introWorld?.envelope?.flap.rotation.x }))
+  ok('reduced motion: no camera travel or door swing; the envelope shown open at once', w.travel === 0 && w.door < 1.0 && w.flap < -2.5, w)
   ok('reduced motion: short transition to the site', (await introGone(page, 2500)) && Date.now() - t0 < 2500, `${Date.now() - t0} ms`)
   const anim = await page.evaluate(() => getComputedStyle(document.querySelector('#home-title')).opacity)
   ok('reduced motion: hero shown', anim === '1')
@@ -175,21 +202,48 @@ for (const vp of VIEWPORTS) {
   await ctx.close()
 }
 
-// asset failure: never a blank screen
+// no WebGL at all: the painted fallback, never a blank screen
 {
   const ctx = await newContext(browser, VIEWPORTS[1])
-  await ctx.route(/\/intro\/(backdrop|door-left)/, (r) => r.fulfill({ status: 404, body: '' }))
+  await ctx.addInitScript(() => {
+    const get = HTMLCanvasElement.prototype.getContext
+    HTMLCanvasElement.prototype.getContext = function (type, ...rest) {
+      return /webgl/i.test(type) ? null : get.call(this, type, ...rest)
+    }
+  })
+  const page = await ctx.newPage()
+  const errors = watchErrors(page)
+  await page.goto(BASE + '/?intro', { waitUntil: 'networkidle' })
+  await page.waitForFunction(() => document.querySelector('.intro')?.dataset.state === 'ready', null, { timeout: 5000 }).catch(() => {})
+  await page.waitForTimeout(1300)
+  const v = await page.evaluate(() => ({
+    flat: document.querySelector('.intro')?.classList.contains('intro--flat'),
+    text: getComputedStyle(document.querySelector('.intro-text')).opacity,
+    names: !!document.querySelector('#intro-names')?.offsetHeight,
+  }))
+  ok('no WebGL: painted fallback with the invitation text and button', v.flat && v.text === '1' && v.names, v)
+  await page.getByRole('button', { name: /tap to open/i }).click()
+  ok('no WebGL: opening still reaches the site', await introGone(page, 3000))
+  ok('no WebGL: no errors', errors.length === 0, errors)
+  await ctx.close()
+}
+
+// the GPU context is lost while the invitation is showing
+{
+  const ctx = await newContext(browser, VIEWPORTS[1])
   const page = await ctx.newPage()
   await page.goto(BASE + '/?intro', { waitUntil: 'networkidle' })
-  await page.waitForFunction(() => document.querySelector('.intro')?.dataset.state === 'ready', null, { timeout: 10000 })
-  await page.waitForTimeout(1000)
-  const visible = await page.evaluate(() => {
-    const s = document.querySelector('.intro-stage')
-    return { stage: getComputedStyle(s).opacity, names: !!document.querySelector('#intro-names')?.offsetHeight }
-  })
-  ok('missing images: invitation text and button still shown', visible.stage === '1' && visible.names, visible)
+  await ready(page)
+  await page.evaluate(() => window.__gl.getContext().getExtension('WEBGL_lose_context')?.loseContext())
+  await page.waitForTimeout(600)
+  const v = await page.evaluate(() => ({
+    flat: document.querySelector('.intro')?.classList.contains('intro--flat'),
+    canvas: document.querySelectorAll('.intro-scene canvas').length,
+    names: !!document.querySelector('#intro-names')?.offsetHeight,
+  }))
+  ok('context lost: falls back to the painted intro, text intact', v.flat && v.canvas === 0 && v.names, v)
   await page.getByRole('button', { name: /tap to open/i }).click()
-  ok('missing images: opening still reaches the site', await introGone(page, 3000))
+  ok('context lost: opening still reaches the site', await introGone(page, 3000))
   await ctx.close()
 }
 

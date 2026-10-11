@@ -1,109 +1,159 @@
 import { useState, type FormEvent } from 'react'
-import { coupleNames, wedding } from '../../config/wedding'
-import { weddingDateRange } from '../../lib/format'
-import { Button } from '../ui/Button'
+import { useI18n } from '../../i18n/useI18n'
+import { buildRsvpMessage, MAX_GUESTS, MAX_NOTE, validateRsvp, whatsappLink, type Attendance, type RsvpErrors } from '../../lib/rsvp'
+import { SceneBackdrop } from '../decor/SceneBackdrop'
+import { GoldRule, OrnateFrame } from '../decor/Ornaments'
 import { WhatsAppIcon } from '../ui/icons'
-import { SectionHeading } from '../ui/SectionHeading'
-
-type Attendance = 'accept' | 'decline'
+import { FloralFrame } from '../decor/FloralFrame'
+import '../../styles/site.css'
+import './rsvp.css'
 
 /**
- * RSVP card. Nothing is stored or sent by the website: the reply is prepared
- * as a WhatsApp message to the family and the guest sends it themselves.
+ * RSVP (Reference B, screen 8). Nothing is stored or sent by the website: the
+ * reply is composed as a WhatsApp message to the family's number, in the
+ * visitor's language, and the guest reviews and sends it themselves.
  */
 export function RsvpSection() {
+  const { t } = useI18n()
   const [name, setName] = useState('')
   const [attendance, setAttendance] = useState<Attendance | null>(null)
   const [guests, setGuests] = useState('')
-  const [errors, setErrors] = useState<{ name?: string; attendance?: string }>({})
+  const [note, setNote] = useState('')
+  const [errors, setErrors] = useState<RsvpErrors>({})
+  const [readyUrl, setReadyUrl] = useState<string | null>(null)
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
-    const trimmed = name.trim()
-    const next: typeof errors = {}
-    if (!trimmed) next.name = 'Please enter your name.'
-    if (!attendance) next.attendance = 'Please choose whether you can join us.'
+    const input = { name, attendance, guests, note }
+    const next = validateRsvp(input, { name: t.rsvp.errors.name, attendance: t.rsvp.errors.attendance, guests: t.rsvp.errors.guests(MAX_GUESTS) })
     setErrors(next)
-    if (next.name || next.attendance) return
-    const lines = [
-      `Wedding RSVP — ${coupleNames}`,
-      `Name: ${trimmed}`,
-      `Attendance: ${attendance === 'accept' ? 'Joyfully accepts' : 'Regretfully declines'}`,
-      ...(attendance === 'accept' && guests ? [`Number of attendees: ${guests}`] : []),
-      `Dates: ${weddingDateRange}`,
-    ]
-    window.open(`${wedding.contact.whatsappUrl}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank', 'noopener,noreferrer')
+    if (next.name || next.attendance || next.guests) {
+      setReadyUrl(null)
+      document.getElementById(next.name ? 'rsvp-name' : next.attendance ? 'rsvp-accept' : 'rsvp-guests')?.focus()
+      return
+    }
+    const url = whatsappLink(buildRsvpMessage(input, t.rsvp.message, t.date.rangeDash, t.couple.pair))
+    setReadyUrl(url)
+    window.open(url, '_blank', 'noopener,noreferrer')
   }
 
+  const choices: ReadonlyArray<readonly [Attendance, string, string]> = [
+    ['accept', t.rsvp.accept, t.rsvp.acceptHint],
+    ['decline', t.rsvp.decline, t.rsvp.declineHint],
+  ]
+
   return (
-    <section id="rsvp" aria-labelledby="rsvp-title" className="section bg-ivory-warm">
-      <div className="container-content">
-        <SectionHeading id="rsvp" eyebrow="R · S · V · P" title="Kindly let us know" />
-        <form noValidate onSubmit={onSubmit} className="mx-auto mt-10 max-w-md rounded-[var(--radius-card)] border border-gold/50 bg-ivory px-6 py-8 shadow-[var(--shadow-card)]">
-          <label htmlFor="rsvp-name" className="block font-display text-[1.1rem] text-ink">
-            Your Name <span aria-hidden="true">*</span>
+    <section id="rsvp" aria-labelledby="rsvp-title" className="rsvp scene scene--fade-top scene--fade-bottom">
+      <SceneBackdrop className="rsvp__bg" />
+      <div className="rsvp__veil" aria-hidden="true" />
+      <FloralFrame />
+      <img className="decor rsvp__lotus" src="/site/lotus.webp" alt="" loading="lazy" />
+
+      <OrnateFrame as="form" data-reveal="0" className="rsvp__card" noValidate onSubmit={onSubmit} aria-labelledby="rsvp-title">
+        <p className="rsvp__eyebrow" aria-hidden="true">
+          {t.rsvp.eyebrow}
+        </p>
+        <h2 id="rsvp-title" className="rsvp__title">
+          {t.rsvp.title}
+        </h2>
+        <GoldRule className="rsvp__rule" />
+
+        <div className="rsvp__field">
+          <label htmlFor="rsvp-name" className="rsvp__label">
+            {t.rsvp.name} <span aria-hidden="true">*</span>
           </label>
           <input
             id="rsvp-name"
             name="name"
             autoComplete="name"
+            placeholder={t.rsvp.namePh}
             required
             aria-invalid={!!errors.name}
             aria-describedby={errors.name ? 'rsvp-name-error' : undefined}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="mt-1 block min-h-11 w-full rounded-lg border border-gold/60 bg-white/70 px-3 text-ink"
+            className="rsvp__input"
           />
           {errors.name && (
-            <p id="rsvp-name-error" className="mt-1 text-[0.92rem] text-maroon">
+            <p id="rsvp-name-error" className="rsvp__error">
               {errors.name}
             </p>
           )}
+        </div>
 
-          <fieldset className="mt-6" aria-describedby={errors.attendance ? 'rsvp-attendance-error' : undefined}>
-            <legend className="font-display text-[1.1rem] text-ink">
-              Will you join us? <span aria-hidden="true">*</span>
-            </legend>
-            {(
-              [
-                ['accept', 'Joyfully accepts'],
-                ['decline', 'Regretfully declines'],
-              ] as const
-            ).map(([value, label]) => (
-              <label key={value} className="mt-2 flex min-h-11 items-center gap-3 rounded-lg border border-gold/40 bg-white/60 px-3">
-                <input type="radio" name="attendance" value={value} checked={attendance === value} onChange={() => setAttendance(value)} />
-                <span>{label}</span>
+        <fieldset className="rsvp__field" aria-describedby={errors.attendance ? 'rsvp-attendance-error' : undefined}>
+          <legend className="rsvp__label">
+            {t.rsvp.join} <span aria-hidden="true">*</span>
+          </legend>
+          <div className="rsvp__choices">
+            {choices.map(([value, label, hint]) => (
+              <label key={value} className={`rsvp__choice ${attendance === value ? 'is-checked' : ''}`}>
+                <input id={`rsvp-${value}`} type="radio" name="attendance" value={value} checked={attendance === value} onChange={() => setAttendance(value)} />
+                <span className="rsvp__mark" aria-hidden="true" />
+                <span className="rsvp__choice-text">
+                  <span className="rsvp__choice-label">{label}</span>
+                  <span className="rsvp__choice-hint">{hint}</span>
+                </span>
               </label>
             ))}
-            {errors.attendance && (
-              <p id="rsvp-attendance-error" className="mt-1 text-[0.92rem] text-maroon">
-                {errors.attendance}
+          </div>
+          {errors.attendance && (
+            <p id="rsvp-attendance-error" className="rsvp__error">
+              {errors.attendance}
+            </p>
+          )}
+        </fieldset>
+
+        {attendance !== 'decline' && (
+          <div className="rsvp__field">
+            <label htmlFor="rsvp-guests" className="rsvp__label">
+              {t.rsvp.guests} <span className="rsvp__optional">{t.rsvp.optional}</span>
+            </label>
+            <input
+              id="rsvp-guests"
+              name="guests"
+              inputMode="numeric"
+              placeholder={t.rsvp.guestsPh}
+              aria-invalid={!!errors.guests}
+              aria-describedby={errors.guests ? 'rsvp-guests-error' : undefined}
+              value={guests}
+              onChange={(e) => setGuests(e.target.value.trim())}
+              className="rsvp__input"
+            />
+            {errors.guests && (
+              <p id="rsvp-guests-error" className="rsvp__error">
+                {errors.guests}
               </p>
             )}
-          </fieldset>
+          </div>
+        )}
 
-          {attendance !== 'decline' && (
+        <div className="rsvp__field">
+          <label htmlFor="rsvp-note" className="rsvp__label">
+            {t.rsvp.note} <span className="rsvp__optional">{t.rsvp.optional}</span>
+          </label>
+          <textarea id="rsvp-note" name="note" rows={3} maxLength={MAX_NOTE} placeholder={t.rsvp.notePh} value={note} onChange={(e) => setNote(e.target.value)} className="rsvp__input rsvp__textarea" />
+        </div>
+
+        <button type="submit" className="rsvp__send">
+          <WhatsAppIcon className="h-5 w-5" /> {t.rsvp.send}
+        </button>
+        <p className="rsvp__note">{t.rsvp.helper}</p>
+
+        <div className="rsvp__ready" role="status" aria-live="polite">
+          {readyUrl && (
             <>
-              <label htmlFor="rsvp-guests" className="mt-6 block font-display text-[1.1rem] text-ink">
-                Number of attendees (optional)
-              </label>
-              <input
-                id="rsvp-guests"
-                name="guests"
-                inputMode="numeric"
-                value={guests}
-                onChange={(e) => setGuests(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                className="mt-1 block min-h-11 w-full rounded-lg border border-gold/60 bg-white/70 px-3 text-ink"
-              />
+              <p className="rsvp__ready-title">{t.rsvp.ready}</p>
+              <p className="rsvp__ready-note">{t.rsvp.readyNote}</p>
+              <a className="rsvp__ready-link" href={readyUrl} target="_blank" rel="noopener noreferrer">
+                <WhatsAppIcon className="h-4 w-4" /> {t.rsvp.openWa}
+                <span className="sr-only"> {t.common.waNewTab}</span>
+              </a>
             </>
           )}
-
-          <Button type="submit" variant="maroon" className="mt-8 w-full" icon={<WhatsAppIcon className="h-5 w-5" />}>
-            Send RSVP via WhatsApp
-          </Button>
-          <p className="mt-3 text-center text-[0.9rem] italic text-ink-soft">Your WhatsApp message will be prefilled. Please tap Send in WhatsApp to share your reply.</p>
-        </form>
-      </div>
+        </div>
+        <p className="rsvp__privacy">{t.rsvp.privacy}</p>
+      </OrnateFrame>
     </section>
   )
 }

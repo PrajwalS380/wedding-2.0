@@ -1,0 +1,32 @@
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: max(1.2rem, env(safe-area-inset-bottom));
+  z-index: 70;
+  max-width: min(92vw, 30rem);
+  padding: 0.8rem 1.2rem;
+  border-radius: 14px;
+  translate: -50% 0.6rem;
+  opacity: 0;
+  pointer-events: none;
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--color-ink);
+  background: url('/site/parchment.webp') center / 320px repeat, #f6ead2;
+  box-shadow:
+    inset 0 0 0 1px rgb(185 138 46 / 0.75),
+    inset 0 0 0 4px rgb(255 250 238 / 0.8),
+    0 20px 40px -20px rgb(40 24 10 / 0.6);
+  transition:
+    opacity var(--dur-base) var(--ease-silk),
+    translate var(--dur-base) var(--ease-silk);
+}
+.toast:empty {
+  display: none;
+}
+.toast.is-shown {
+  opacity: 1;
+  translate: -50% 0;
+}

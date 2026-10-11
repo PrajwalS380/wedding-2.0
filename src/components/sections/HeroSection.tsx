@@ -1,42 +1,75 @@
 import { wedding } from '../../config/wedding'
+import { useI18n } from '../../i18n/useI18n'
 import { scrollToSection } from '../../lib/browser'
-import { weddingDateRangeOrdinal } from '../../lib/format'
+import { LaurelMonogram } from '../decor/Ornaments'
+import { PetalField } from '../effects/PetalField'
 import { ButtonLink } from '../ui/Button'
 import { ArrowRight } from '../ui/icons'
-import { Monogram } from '../ui/Monogram'
+import '../../styles/site.css'
+import './hero.css'
 
-/** The royal wedding entrance — the page's only h1. */
+/**
+ * The royal wedding entrance (Reference B, screen 1). The scene is a still of the
+ * same palace garden the intro walks into, rendered from src/three in landscape and
+ * portrait framings, with the couple (public/site/couple.svg) standing on the aisle,
+ * backlit by the setting sun. Jasmine hangs at the edges. The only h1.
+ */
 export function HeroSection() {
+  const { t } = useI18n()
   return (
-    <section id="home" aria-labelledby="home-title" className="relative isolate flex min-h-[100svh] items-center overflow-hidden pt-[var(--header-h)]">
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 -z-10 bg-[radial-gradient(120%_80%_at_50%_0%,#fde9c4_0%,#f7dcae_35%,#f3e5c8_70%,#fbf6ec_100%)]"
-      />
-      <div className="container-content grid items-center gap-10 py-12 md:grid-cols-2">
-        <div className="text-center md:text-left">
-          <Monogram size="md" className="mx-auto md:mx-0" />
-          <p className="eyebrow mt-5">Two families · one beautiful journey</p>
-          <h1 id="home-title" tabIndex={-1} className="mt-4 text-emerald-deep">
-            <span className="script block text-[clamp(3.6rem,13vw,6.5rem)]">{wedding.couple.first}</span>
-            <span className="script block text-[clamp(2rem,6vw,3rem)] text-gold-deep">&amp;</span>
-            <span className="block font-display text-[clamp(3rem,11vw,5.5rem)] font-medium">{wedding.couple.second}</span>
-          </h1>
-          <p className="mt-5 font-display text-[1.35rem] text-ink">{weddingDateRangeOrdinal}</p>
-          <p className="font-display text-[1.2rem] text-ink-soft">{wedding.venue.city}</p>
-          <ButtonLink
-            href="#invitation"
-            className="mt-8"
-            onClick={(e) => {
-              e.preventDefault()
-              scrollToSection('invitation')
-            }}
-            trailingIcon={<ArrowRight />}
-          >
-            Enter the wedding
-          </ButtonLink>
-        </div>
-        <div aria-hidden="true" className="mx-auto hidden aspect-[3/4] w-full max-w-md rounded-t-full border border-gold/50 bg-[linear-gradient(180deg,#f9e2bd,#e9cfa0)] md:block" />
+    <section id="home" aria-labelledby="home-title" className="hero">
+      <picture className="hero__scene">
+        <source media="(min-aspect-ratio: 1/1)" srcSet="/site/hero-wide.webp" />
+        <source media="(min-aspect-ratio: 3/5)" srcSet="/site/hero-tablet.webp" />
+        <img
+          src="/site/hero-tall.webp"
+          alt={t.hero.sceneAlt}
+          decoding="async"
+          fetchPriority="high"
+        />
+      </picture>
+      <div className="hero__light" aria-hidden="true" />
+      <PetalField className="hero__petals" petals={14} motes={30} />
+
+      <img className="decor hero__garland hero__garland--l" src="/site/garland.webp" alt="" />
+      <img className="decor hero__garland hero__garland--r" src="/site/garland.webp" alt="" />
+      <img className="decor hero__lotus" src="/site/lotus.webp" alt="" width={600} height={392} fetchPriority="high" />
+
+      <div className="hero__content">
+        <LaurelMonogram className="hero__monogram" />
+        <p className="eyebrow-caps hero__eyebrow">
+          {t.hero.tag1}
+          <br />
+          {t.hero.tag2}
+        </p>
+        <h1 id="home-title" tabIndex={-1} className="hero__names">
+          <span className="hero__first">{wedding.couple.first}</span>
+          <span className="hero__amp" aria-hidden="true">
+            &amp;
+          </span>
+          <span className="sr-only"> {t.couple.and} </span>
+          <span className="hero__second">{wedding.couple.second}</span>
+        </h1>
+        <p className="hero__date">{t.date.rangeOrdinal}</p>
+        <p className="hero__place">{t.city}</p>
+      </div>
+
+      <div className="hero__actions">
+        <ButtonLink
+          href="#invitation"
+          className="hero__cta"
+          onClick={(e) => {
+            e.preventDefault()
+            scrollToSection('invitation')
+          }}
+          trailingIcon={<ArrowRight />}
+        >
+          {t.hero.enter}
+        </ButtonLink>
+        <span className="hero__scroll" aria-hidden="true">
+          <span className="hero__mouse" />
+          {t.hero.scroll}
+        </span>
       </div>
     </section>
   )

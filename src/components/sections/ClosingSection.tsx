@@ -1,41 +1,70 @@
 import type { MouseEvent } from 'react'
-import { coupleNames, wedding } from '../../config/wedding'
+import { wedding } from '../../config/wedding'
+import { useI18n } from '../../i18n/useI18n'
+import { CalendarButton, ShareButton } from '../ui/Actions'
 import { scrollToSection } from '../../lib/browser'
-import { weddingDateRangeOrdinal } from '../../lib/format'
-import { ButtonLink } from '../ui/Button'
-import { ArrowUp, MapPin } from '../ui/icons'
+import { SceneBackdrop } from '../decor/SceneBackdrop'
+import { useFireworks } from '../magic/useFireworks'
+import { GoldRule } from '../decor/Ornaments'
+import { ArrowUp, HeartIcon, MapPin } from '../ui/icons'
 import { Monogram } from '../ui/Monogram'
+import '../../styles/site.css'
+import './closing.css'
 
-/** Closing blessing + footer. */
+/**
+ * The closing blessing (Reference B, screen 9): the palace at dusk, lit and
+ * mirrored in the long pool, and the footer.
+ */
 export function ClosingSection() {
-  const toTop = (e: MouseEvent) => {
+  const { t } = useI18n()
+  const fireworks = useFireworks()
+  const go = (id: string) => (e: MouseEvent) => {
     e.preventDefault()
-    scrollToSection('home')
+    scrollToSection(id)
   }
   return (
-    <footer id="closing" className="relative overflow-hidden bg-[linear-gradient(180deg,#f8eedb,#f0dcb5)] pt-[var(--section-pad-y)]">
-      <div className="container-content text-center">
-        <p className="script text-[2.2rem] text-gold-deep">With love &amp; blessings</p>
-        <p className="mt-2 font-display text-[clamp(2.4rem,8vw,4rem)] text-emerald-deep">{coupleNames}</p>
-        <p className="mt-2 font-display text-[1.25rem] text-ink">
-          {weddingDateRangeOrdinal} · {wedding.venue.city}
-        </p>
-        <p className="mx-auto mt-5 max-w-[34rem] text-ink-soft">
-          We would be delighted to celebrate these special moments with you. Your blessings, love, and presence will make our celebration complete.
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <ButtonLink href={wedding.venue.mapsUrl} target="_blank" rel="noopener noreferrer" variant="ivory" icon={<MapPin />}>
-            Venue directions
-            <span className="sr-only"> (opens Google Maps in a new tab)</span>
-          </ButtonLink>
+    <footer id="closing" className="closing">
+      <div className="closing__scene scene scene--fade-top">
+        <SceneBackdrop className="closing__bg" scene="closing" soft={false} />
+        <div className="closing__veil" aria-hidden="true" />
+        {fireworks.layer}
+        <div data-reveal="0" className="closing__content">
+          <p className="closing__blessing">{t.closing.blessing}</p>
+          <p className="closing__names">
+            {wedding.couple.first} <span>&amp;</span> {wedding.couple.second}
+          </p>
+          <p className="closing__date">
+            {t.date.rangeOrdinal} · {t.city}
+          </p>
+          <GoldRule className="closing__rule" />
+          <p className="closing__message">
+            {t.closing.message}
+          </p>
+          <div className="closing__actions">
+            <a className="closing__btn closing__btn--primary" href="#rsvp" onClick={go('rsvp')}>
+              <HeartIcon className="h-4 w-4" /> {t.closing.rsvp}
+            </a>
+            <a className="closing__btn" href={wedding.venue.mapsUrl} target="_blank" rel="noopener noreferrer">
+              <MapPin className="h-4 w-4" /> {t.closing.directions}
+              <span className="sr-only"> {t.common.mapsNewTab}</span>
+            </a>
+            <ShareButton className="closing__btn" />
+            <CalendarButton className="closing__btn" />
+          </div>
+          {fireworks.button}
         </div>
       </div>
-      <div className="mt-16 bg-emerald-deep py-10 text-center text-gold-pale">
-        <Monogram size="sm" wreath={false} className="[&_span]:!text-gold-pale" />
-        <p className="mt-2 font-display text-[1.15rem]">{coupleNames}</p>
-        <p className="mt-1 text-[0.9rem] text-gold-pale/85">Made with love for {coupleNames}</p>
-        <a href="#home" onClick={toTop} className="caps mt-6 inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-[0.75rem] text-gold-pale hover:text-ivory">
-          <ArrowUp /> Back to top
+
+      <div className="closing__footer">
+        <span className="closing__crest">
+          <Monogram size="sm" wreath={false} className="closing__mono" />
+        </span>
+        <p className="closing__footer-names">{t.couple.pair}</p>
+        <p className="closing__made">
+          {t.closing.made(t.couple.pair)} <HeartIcon className="closing__heart" aria-hidden="true" />
+        </p>
+        <a href="#home" onClick={go('home')} className="closing__top">
+          <ArrowUp /> {t.closing.top}
         </a>
       </div>
     </footer>

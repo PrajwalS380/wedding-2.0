@@ -17,11 +17,14 @@ export default defineConfig({
   build: {
     target: 'es2022',
     assetsInlineLimit: 2048,
+    // three.js is only loaded with the intro scene (a lazy chunk), never by the main page
+    chunkSizeWarningLimit: 800,
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules/react')) return 'react'
-          if (id.includes('node_modules/gsap')) return 'gsap'
+          if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'react'
+          if (/node_modules\/gsap\//.test(id)) return 'gsap'
+          if (/node_modules\/three\//.test(id)) return 'three'
         },
       },
     },

@@ -1,0 +1,279 @@
+/* Hero — Reference B screen 1: the couple on the aisle of the sunset palace garden */
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: max(100svh, 640px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(var(--header-h) + 0.25rem) 1.25rem 0;
+  background: #ecc9b0;
+}
+
+/* the scene: a still of the palace garden at golden hour */
+.hero__scene,
+.hero__scene img {
+  position: absolute;
+  inset: 0;
+  z-index: -3;
+  width: 100%;
+  height: 100%;
+}
+.hero__scene img {
+  object-fit: cover;
+  object-position: 50% 64%;
+  display: block;
+}
+/* golden haze where the names sit; a little shade at the foot for the button */
+.hero__light {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(85% 30% at 50% 21%, rgb(255 248 234 / 0.78) 0%, rgb(255 244 226 / 0.45) 55%, rgb(255 240 218 / 0) 100%),
+    linear-gradient(0deg, rgb(40 20 10 / 0.3) 0%, rgb(40 20 10 / 0) 20%);
+}
+
+/* a few rose petals and golden motes drifting in the evening light */
+.hero__petals {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* jasmine strands framing the top corners */
+.hero__garland {
+  top: -2%;
+  height: min(46svh, 420px);
+  width: auto;
+  z-index: 1;
+  filter: drop-shadow(0 10px 14px rgb(60 30 10 / 0.25));
+}
+.hero__garland--l {
+  left: -24px;
+}
+.hero__garland--r {
+  right: -24px;
+  transform: scaleX(-1);
+}
+/* a lotus at the foot */
+.hero__lotus {
+  left: -12%;
+  bottom: -3%;
+  width: min(62vw, 300px);
+  z-index: 2;
+  filter: drop-shadow(0 12px 16px rgb(40 20 10 / 0.3));
+}
+
+.hero__content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  max-width: 34rem;
+}
+.hero__monogram {
+  display: none;
+  width: clamp(7rem, 22vw, 9rem);
+}
+.hero__eyebrow {
+  margin-top: 0.4rem;
+  font-size: clamp(0.68rem, 2.8vw, 0.8rem);
+  color: #4a3520;
+  line-height: 1.7;
+}
+.hero__names {
+  margin-top: 0.3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--color-emerald-deep);
+  line-height: 1;
+}
+.hero__first {
+  font-family: var(--font-script);
+  font-weight: 400;
+  font-size: clamp(3.4rem, 15vw, 6rem);
+  line-height: 1.12;
+  text-shadow: 0 2px 18px rgb(255 248 230 / 0.95);
+}
+.hero__amp {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(1.9rem, 8vw, 3rem);
+  color: var(--color-gold-deep);
+  margin: -0.4em 0 -0.3em;
+}
+.hero__second {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(2.9rem, 12.5vw, 5.2rem);
+  letter-spacing: 0.01em;
+  text-shadow: 0 2px 18px rgb(255 248 230 / 0.95);
+}
+.hero__date {
+  margin-top: 0.45rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.1rem, 4.4vw, 1.4rem);
+  color: #34241a;
+  text-shadow: 0 0 12px rgb(255 246 230 / 0.95);
+}
+.hero__place {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(1rem, 3.9vw, 1.2rem);
+  color: #4a3826;
+  text-shadow: 0 0 12px rgb(255 246 230 / 0.95);
+}
+
+.hero__actions {
+  position: relative;
+  z-index: 4;
+  margin-top: auto;
+  padding-bottom: clamp(1rem, 3.2svh, 2rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+.hero__cta {
+  padding-inline: 1.8rem;
+  min-height: 3rem;
+  letter-spacing: 0.18em;
+  box-shadow:
+    0 14px 30px -14px rgb(10 39 29 / 0.85),
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    inset 0 0 0 3px rgb(19 77 58 / 1),
+    inset 0 0 0 4px rgb(217 181 94 / 0.55);
+}
+.hero__scroll {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-caps);
+  font-size: 0.64rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #fff3dc;
+  text-shadow: 0 1px 8px rgb(30 14 6 / 0.8);
+}
+.hero__mouse {
+  width: 1.1rem;
+  height: 1.7rem;
+  border-radius: 1rem;
+  border: 1.5px solid currentColor;
+  position: relative;
+}
+.hero__mouse::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0.3rem;
+  width: 2px;
+  height: 0.36rem;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: currentColor;
+  animation: hero-wheel 2.2s var(--ease-silk) infinite;
+}
+@keyframes hero-wheel {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  70% {
+    transform: translateY(0.45rem);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* taller phones and tablets in portrait: room for the monogram */
+@media (min-height: 860px) and (max-aspect-ratio: 1/1) {
+  .hero__monogram {
+    display: inline-grid;
+    width: clamp(6rem, 20vw, 8.5rem);
+  }
+}
+
+/* landscape screens: the names in the left half, the couple on the aisle to the right */
+@media (min-aspect-ratio: 1/1) {
+  .hero {
+    align-items: flex-start;
+    min-height: max(100vh, 620px);
+    padding: calc(var(--header-h) + 1rem) 5vw 0;
+  }
+  .hero__scene img {
+    object-position: 60% 60%;
+  }
+  .hero__light {
+    background:
+      radial-gradient(34% 46% at 26% 48%, rgb(255 248 234 / 0.82) 0%, rgb(255 244 226 / 0.5) 52%, rgb(255 240 218 / 0) 100%),
+      linear-gradient(0deg, rgb(40 20 10 / 0.18) 0%, rgb(40 20 10 / 0) 18%);
+  }
+  .hero__content {
+    width: 46%;
+    max-width: 36rem;
+    margin-top: auto;
+  }
+  .hero__monogram {
+    display: inline-grid;
+  }
+  .hero__first {
+    font-size: clamp(3.6rem, 7.4vw, 7rem);
+  }
+  .hero__amp {
+    font-size: clamp(2rem, 3.6vw, 3.4rem);
+  }
+  .hero__second {
+    font-size: clamp(3rem, 6.2vw, 6rem);
+  }
+  .hero__actions {
+    width: 46%;
+    max-width: 36rem;
+    margin-top: 1.6rem;
+    margin-bottom: auto;
+    padding-bottom: 2rem;
+  }
+  .hero__scroll {
+    color: #3a2818;
+    text-shadow:
+      0 0 6px rgb(255 246 228 / 1),
+      0 0 14px rgb(255 246 228 / 0.95);
+  }
+  .hero__garland {
+    height: min(70vh, 640px);
+  }
+  .hero__lotus {
+    left: -6%;
+    bottom: -5%;
+    width: min(26vw, 380px);
+  }
+}
+
+/* short landscape (phones on their side): a compact stack */
+@media (min-aspect-ratio: 1/1) and (max-height: 560px) {
+  .hero__monogram,
+  .hero__eyebrow {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__mouse::after {
+    animation: none;
+  }
+}

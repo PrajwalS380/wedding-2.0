@@ -22,4 +22,17 @@ export default tseslint.config(
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
+  {
+    // The WebGL world (three.js / react-three-fiber) is imperative by nature: scene
+    // objects, uniforms and instanced matrices are mutated inside the frame loop,
+    // refs are handed to the renderer, and decorative variety is seeded with random
+    // numbers. The React Compiler purity rules do not apply to that code.
+    files: ['src/three/**/*.{ts,tsx}'],
+    rules: {
+      'react-hooks/immutability': 'off',
+      'react-hooks/purity': 'off',
+      'react-hooks/refs': 'off',
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 )

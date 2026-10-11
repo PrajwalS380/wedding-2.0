@@ -47,6 +47,12 @@ for (const vp of VIEWPORTS) {
     await page.waitForTimeout(60)
   }
   ok(`[${vp.name}] no horizontal overflow on the page`, (await overflowX(page)) <= 0)
+  // the dev / preview servers answer a missing file with the page itself (200), so check that every image decodes
+  // (images hidden at this size, e.g. desktop-only lamps, are rightly never fetched)
+  const shown = () => [...document.images].filter((i) => i.getClientRects().length > 0)
+  await page.waitForFunction((f) => new Function('return ' + f)()().every((i) => i.complete), shown.toString(), { timeout: 15000 }).catch(() => {})
+  const broken = await page.evaluate(() => [...document.images].filter((i) => i.getClientRects().length > 0 && (!i.complete || i.naturalWidth === 0)).map((i) => i.currentSrc || i.src))
+  ok(`[${vp.name}] every image loads and decodes`, broken.length === 0, broken.slice(0, 4))
 
   await page.reload({ waitUntil: 'networkidle' })
   ok(`[${vp.name}] reload in the same session goes straight to the site`, (await page.getByRole('dialog').count()) === 0 && (await page.locator('#home-title').isVisible()))
@@ -59,7 +65,7 @@ for (const vp of VIEWPORTS) {
   const ctx = await newContext(browser, VIEWPORTS[1], { reducedMotion: 'reduce' })
   const page = await ctx.newPage()
   await page.goto(BASE + '/', { waitUntil: 'networkidle' })
-  await page.waitForFunction(() => document.activeElement?.getAttribute('role') === 'dialog', null, { timeout: 8000 })
+  await page.waitForFunction(() => document.activeElement?.getAttribute('role') === 'dialog', null, { timeout: 30000 })
   ok('keyboard: focus moves into the intro dialog', true)
   await page.keyboard.press('Tab')
   const focused = await page.evaluate(() => document.activeElement?.textContent?.trim())
@@ -77,7 +83,7 @@ for (const vp of VIEWPORTS) {
   const btn = page.getByRole('button', { name: /tap to open/i })
   await btn.click()
   await btn.click({ force: true, timeout: 1000 }).catch(() => {}) // a second click must not break anything
-  await page.getByRole('dialog').waitFor({ state: 'detached', timeout: 5000 })
+  await page.getByRole('dialog').waitFor({ state: 'detached', timeout: 15000 })
   ok('tap to open reveals the site; repeated clicks are harmless', await page.locator('#home-title').isVisible())
   // RSVP: empty submission shows both errors, nothing opens
   let opened = 0
@@ -86,8 +92,12 @@ for (const vp of VIEWPORTS) {
   await page.locator('#rsvp form button[type="submit"]').click()
   const errs = await page.locator('#rsvp [id$="-error"]').count()
   ok('RSVP: empty form shows validation, WhatsApp not opened', errs === 2 && opened === 0, { errs, opened })
-  const tel = await page.locator('a[href^="tel:"]').first().getAttribute('href')
-  ok('Need help: confirmed phone number', tel === 'tel:+919591420987', tel)
+  const tel = await page.locator('#guest-services a[href^="tel:"]').first().getAttribute('href')
+  const wa = await page.locator('#guest-services a[href^="https://wa.me/"]').first().getAttribute('href')
+  ok('Need help: Call and WhatsApp use the confirmed number', tel === 'tel:+919591420987' && wa === 'https://wa.me/919591420987', { tel, wa })
+  const helpText = await page.locator('#guest-services').innerText()
+  ok('Need help: the number is shown', helpText.includes('+91 95914 20987'))
+  ok('closing offers RSVP and directions', (await page.locator('#closing a[href="#rsvp"]').count()) === 1 && (await page.locator('#closing a[href*="google.com/maps"]').count()) === 1)
   await ctx.close()
 }
 

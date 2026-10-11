@@ -1,4 +1,4 @@
-// Pixel contrast of the intro's text against the painted scene behind it (WCAG ratios).
+// Pixel contrast of the intro's text against the live scene behind it (WCAG ratios).
 import { mkdirSync } from 'node:fs'
 import { BASE, VIEWPORTS, launch, newContext, reporter } from './lib.mjs'
 const { ok, done } = reporter('INTRO CONTRAST')
@@ -16,8 +16,10 @@ for (const vp of VIEWPORTS) {
   const ctx = await newContext(browser, { ...vp, mobile: false })
   const page = await ctx.newPage()
   await page.goto(BASE + '/?intro', { waitUntil: 'networkidle' })
-  await page.waitForFunction(() => document.querySelector('.intro')?.dataset.state === 'ready')
-  await page.waitForTimeout(1200)
+  await page.waitForFunction(() => document.querySelector('.intro')?.dataset.state === 'ready', null, { timeout: 30000 })
+  // the fade-in can stretch while shaders compile (GSAP lag smoothing): wait for the lettering itself
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('.intro-text')).opacity === '1', null, { timeout: 15000 })
+  await page.waitForTimeout(300)
   const items = await page.evaluate(() =>
     [
       ['skip', '.intro-skip', true],
@@ -42,7 +44,7 @@ for (const vp of VIEWPORTS) {
     }),
   )
   // hide text, keep each control's own background, and screenshot what lies behind the letters
-  await page.addStyleTag({ content: '.intro-text *, .intro-skip { color: transparent !important; text-shadow: none !important } .intro-particles{display:none!important} .intro-flame{animation:none!important}' })
+  await page.addStyleTag({ content: '.intro-text *, .intro-skip { color: transparent !important; text-shadow: none !important }' })
   await page.waitForTimeout(200)
   const shot = await page.screenshot()
   const { PNG } = await import('pngjs').catch(() => ({ PNG: null }))

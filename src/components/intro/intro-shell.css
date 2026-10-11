@@ -1,0 +1,29 @@
+.intro-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 1rem;
+  background: radial-gradient(90% 70% at 50% 40%, #4a2a12 0%, #1f1007 60%, #120904 100%);
+  color: #f3dda0;
+}
+.intro-shell__mono {
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  line-height: 1;
+  text-shadow: 0 0 24px rgb(255 205 120 / 0.55);
+}
+.intro-shell__mono span {
+  font-family: var(--font-script);
+  font-size: 0.75em;
+  margin-inline: 0.1em;
+}
+.intro-shell__text {
+  font-family: var(--font-caps);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgb(243 221 160 / 0.8);
+}
