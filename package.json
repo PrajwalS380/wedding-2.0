@@ -12,8 +12,9 @@
     "lint": "eslint .",
     "test": "vitest run",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build",
-    "test:e2e": "node tests/e2e/smoke.mjs && node tests/e2e/a11y.mjs",
-    "shots": "node tests/e2e/shots.mjs"
+    "test:e2e": "node tests/e2e/smoke.mjs && node tests/e2e/intro.mjs && node tests/e2e/introperf.mjs && node tests/e2e/introcontrast.mjs && node tests/e2e/a11y.mjs",
+    "shots": "node tests/e2e/shots.mjs",
+    "assets:intro": "python tools/intro/build_intro_assets.py"
   },
   "dependencies": {
     "@fontsource/cinzel": "^5.3.0",
@@ -37,6 +38,7 @@
     "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^17.13.0",
     "playwright-core": "^1.58.2",
+    "pngjs": "^7.0.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.1",

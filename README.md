@@ -37,7 +37,8 @@ npm install
 npm run dev          # http://127.0.0.1:5174
 npm run check        # type-check + lint + unit tests + production build
 npm run test         # unit tests (Vitest): dates, countdown, confirmed facts
-npm run test:e2e     # browser checks against the dev server (needs Microsoft Edge)
+npm run test:e2e     # browser checks against the dev server (needs Microsoft Edge):
+                     #   smoke, intro behaviour, intro rendering guard, intro contrast, axe
 npm run shots        # screenshots of the intro and every section at 5 viewports
 npm run build && npm run preview   # production build on http://127.0.0.1:4180
 ```
@@ -62,6 +63,8 @@ src/
   components/ui/        buttons, monogram, ornaments, icons, section heading
   styles/index.css      design tokens (colour, type, motion, layout, shadows)
 docs/reference/         the two approved design references (A: intro, B: website)
+docs/ASSETS.md          where every image comes from
+tools/intro/            builds the intro's scene layers from Reference A
 tests/e2e/              browser checks (smoke, accessibility, screenshots)
 ```
 
@@ -76,6 +79,10 @@ tests/e2e/              browser checks (smoke, accessibility, screenshots)
   guest sends it themselves. Nothing is stored or transmitted by the site.
 
 ## Intro behaviour
+
+The intro is Reference A rebuilt as a layered scene (doors, envelope, seal,
+lamps, petals) with one GSAP timeline for the opening — see
+`docs/PHASE_2_INTRO.md`. Its lettering and button are live HTML.
 
 The intro is a modal dialog over the real page (the page behind it is `inert`).
 It shows on the first visit of a browsing session; after the guest opens or
