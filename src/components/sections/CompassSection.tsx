@@ -2,6 +2,7 @@ import { useState, type MouseEvent } from 'react'
 import { useI18n } from '../../i18n/useI18n'
 import { scrollToSection } from '../../lib/browser'
 import { CompassDial } from '../decor/CompassDial'
+import { CompassArch } from '../decor/CompassArch'
 import { CalendarIcon, GuestsIcon, MapPin, ScrollIcon } from '../ui/icons'
 import './compass.css'
 import { SceneBackdrop } from '../decor/SceneBackdrop'
@@ -26,7 +27,7 @@ export function CompassSection() {
     <section id="compass" aria-labelledby="compass-title" className="compass scene scene--fade-top scene--fade-bottom">
       <SceneBackdrop className="compass__bg" />
       <div className="compass__veil" aria-hidden="true" />
-      <FloralFrame />
+      <FloralFrame corners={['tl', 'tr', 'bl', 'br']} />
       <img className="decor compass__garland compass__garland--l" src="/site/strand.webp" alt="" loading="lazy" />
       <img className="decor compass__garland compass__garland--r" src="/site/strand.webp" alt="" loading="lazy" />
 
@@ -40,6 +41,7 @@ export function CompassSection() {
 
       <div className="compass__layout">
         <div data-reveal="1" className="compass__dial-wrap">
+          <CompassArch className="compass__arch" />
           <CompassDial className="compass__dial" heading={heading} />
         </div>
         <nav aria-label={t.compass.nav} data-reveal="2" className="compass__nav">

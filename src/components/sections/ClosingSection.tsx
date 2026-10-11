@@ -5,6 +5,7 @@ import { CalendarButton, ShareButton } from '../ui/Actions'
 import { scrollToSection } from '../../lib/browser'
 import { SceneBackdrop } from '../decor/SceneBackdrop'
 import { useFireworks } from '../magic/useFireworks'
+import { FloralFrame } from '../decor/FloralFrame'
 import { GoldRule } from '../decor/Ornaments'
 import { ArrowUp, HeartIcon, MapPin } from '../ui/icons'
 import { Monogram } from '../ui/Monogram'
@@ -28,6 +29,7 @@ export function ClosingSection() {
         <SceneBackdrop className="closing__bg" scene="closing" soft={false} />
         <div className="closing__veil" aria-hidden="true" />
         {fireworks.layer}
+        <FloralFrame corners={['bl', 'br']} className="floral-frame--dusk" />
         <div data-reveal="0" className="closing__content">
           <p className="closing__blessing">{t.closing.blessing}</p>
           <p className="closing__names">

@@ -20,9 +20,31 @@
   right: -2%;
   transform: scaleX(-1);
 }
+.floral-frame__corner--bl,
+.floral-frame__corner--br {
+  top: auto;
+  bottom: -2%;
+  width: clamp(110px, 26vw, 300px);
+}
+.floral-frame__corner--bl {
+  left: -3%;
+}
+.floral-frame__corner--br {
+  right: -3%;
+  transform: scaleX(-1);
+}
+/* in the dusk scenes the flowers take the evening light */
+.floral-frame--dusk .floral-frame__corner {
+  filter: brightness(0.62) saturate(0.85) sepia(0.15) drop-shadow(0 12px 14px rgb(10 4 14 / 0.4));
+}
 @media (min-width: 900px) {
   .floral-frame__corner {
     top: calc(var(--header-h) - 2.4rem);
     width: clamp(240px, 22vw, 400px);
+  }
+  .floral-frame__corner--bl,
+  .floral-frame__corner--br {
+    top: auto;
+    width: clamp(240px, 21vw, 380px);
   }
 }

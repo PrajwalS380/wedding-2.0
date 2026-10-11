@@ -70,11 +70,26 @@
   gap: 1.8rem;
 }
 .compass__dial-wrap {
-  width: min(78vw, 22rem);
+  position: relative;
+  isolation: isolate;
+  width: min(66vw, 20rem);
   aspect-ratio: 1;
+  margin-top: 6rem;
   filter: drop-shadow(0 24px 26px rgb(50 30 8 / 0.35));
 }
+/* the dial is set in a gilded marble jharokha arch (Reference B) */
+.compass__arch {
+  position: absolute;
+  z-index: -1;
+  left: -13%;
+  width: 126%;
+  max-width: none;
+  bottom: -12%;
+  height: auto;
+  overflow: visible;
+}
 .compass__dial {
+  position: relative;
   width: 100%;
   height: 100%;
 }
@@ -174,6 +189,7 @@
     column-gap: 4rem;
   }
   .compass__dial-wrap {
-    width: 24rem;
+    width: 21rem;
+    margin-top: 6.6rem;
   }
 }

@@ -46,8 +46,7 @@ export function RsvpSection() {
     <section id="rsvp" aria-labelledby="rsvp-title" className="rsvp scene scene--fade-top scene--fade-bottom">
       <SceneBackdrop className="rsvp__bg" />
       <div className="rsvp__veil" aria-hidden="true" />
-      <FloralFrame />
-      <img className="decor rsvp__lotus" src="/site/lotus.webp" alt="" loading="lazy" />
+      <FloralFrame corners={['tl', 'tr', 'bl', 'br']} />
 
       <OrnateFrame as="form" data-reveal="0" className="rsvp__card" noValidate onSubmit={onSubmit} aria-labelledby="rsvp-title">
         <p className="rsvp__eyebrow" aria-hidden="true">

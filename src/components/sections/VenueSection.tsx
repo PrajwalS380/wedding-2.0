@@ -20,9 +20,8 @@ export function VenueSection() {
     <section id="venue" aria-labelledby="venue-title" className="venue scene scene--fade-top scene--fade-bottom">
       <SceneBackdrop className="venue__bg" />
       <div className="venue__veil" aria-hidden="true" />
-      <FloralFrame />
+      <FloralFrame corners={['tl', 'tr', 'bl', 'br']} />
       <img className="decor venue__lamp" src="/site/lamp.webp" alt="" loading="lazy" />
-      <img className="decor venue__lotus" src="/site/lotus.webp" alt="" loading="lazy" />
 
       <header data-reveal="0" className="venue__head">
         <h2 id="venue-title" className="title-caps">

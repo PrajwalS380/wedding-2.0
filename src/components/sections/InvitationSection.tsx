@@ -18,7 +18,7 @@ export function InvitationSection() {
     <section id="invitation" aria-labelledby="invitation-title" className="invitation scene scene--fade-top scene--fade-bottom">
       <SceneBackdrop className="invitation__bg" />
       <div className="invitation__veil" aria-hidden="true" />
-      <FloralFrame />
+      <FloralFrame corners={['tl', 'tr', 'bl', 'br']} />
       <img className="decor invitation__garland invitation__garland--left" src="/site/strand.webp" alt="" loading="lazy" />
       <img className="decor invitation__garland invitation__garland--right" src="/site/strand.webp" alt="" loading="lazy" />
       <img className="decor invitation__lamp invitation__lamp--l" src="/site/lamp.webp" alt="" loading="lazy" />

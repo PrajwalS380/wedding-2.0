@@ -12,7 +12,7 @@ src, dst, w, h, mode = sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[
 im = Image.open(src)
 im = im.convert('RGBA' if mode == 'alpha' else 'RGB').resize((w, h), Image.LANCZOS)
 # decorative cut-outs are shown small: store them at their final web size
-WEB_SIZE = {'garland': (200, 1000), 'strand': (84, 1000), 'florals-a': (640, 640), 'florals-b': (640, 640), 'lotus': (600, 392), 'seal-tassels': (360, 415), 'lamp': (220, 619)}
+WEB_SIZE = {'garland': (200, 1000), 'strand': (84, 1000), 'florals-a': (640, 640), 'florals-b': (640, 640), 'florals-bottom': (640, 640), 'lotus': (600, 392), 'seal-tassels': (360, 415), 'lamp': (220, 619)}
 key = os.path.basename(dst).rsplit('.', 1)[0]
 if key in WEB_SIZE:
     im = im.resize(WEB_SIZE[key], Image.LANCZOS)

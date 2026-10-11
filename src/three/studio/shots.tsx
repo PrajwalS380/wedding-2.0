@@ -253,6 +253,24 @@ export const SHOTS: Record<string, Shot> = {
       </>
     ),
   },
+  // a bottom-corner arrangement: roses, lotus, jasmine and leaves rising from the lower left
+  'florals-bottom': {
+    w: 900,
+    h: 900,
+    transparent: true,
+    camera: { position: [0.36, 0.3, 1.3], target: [0.36, 0.3, 0], fov: 34 },
+    content: () => (
+      <>
+        <StudioLight />
+        <group scale={[1, -1, 1]}>
+          <FloralCorner seed={12} roses={12} shadows />
+        </group>
+        <Lotus position={[0.42, 0.06, 0.12]} size={0.13} seed={41} />
+        <Lotus position={[0.18, 0.12, 0.18]} size={0.09} seed={44} openness={0.6} rotation={1.1} />
+        <LotusLeaf position={[0.5, 0.0, 0.08]} radius={0.17} seed={45} rotation={0.4} tilt={-1.2} />
+      </>
+    ),
+  },
   lamp: {
     w: 320,
     h: 900,
