@@ -1,0 +1,32 @@
+# dependencies / build output
+node_modules
+dist
+dist-ssr
+*.local
+.vite
+
+# environment files — Website 2.0 needs none; never commit secrets
+.env
+.env.*
+!.env.example
+
+# Vercel CLI link (created when the project is connected)
+.vercel
+
+# asset-pipeline scratch (sources and renders stay out of the repo)
+tools/.cache
+tools/out
+*.wav
+
+# phase prompt files supplied for development (kept locally, not part of the site)
+Phase *.txt
+
+# OS / editor / tool noise
+.DS_Store
+Thumbs.db
+*.log
+.idea
+.vscode/*
+!.vscode/extensions.json
+test-results
+playwright-report

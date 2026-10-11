@@ -1,0 +1,252 @@
+@import 'tailwindcss';
+
+/* ==================================================================
+   Design tokens — Website 2.0 "royal garden" identity
+   Ivory parchment surfaces, emerald & forest greens, sage, antique gold,
+   restrained maroon, warm sunset light.
+   Small text never uses the light golds (contrast); `gold-deep` and
+   `emerald` are the text-safe accents on ivory.
+=================================================================== */
+@theme {
+  /* surfaces */
+  --color-ivory: #fbf6ec;
+  --color-ivory-warm: #f8eedb;
+  --color-parchment: #f3e5c8;
+  --color-parchment-deep: #e8d3a8;
+  --color-sand: #d8c096;
+
+  /* greens */
+  --color-emerald: #134d3a;
+  --color-emerald-deep: #0c3427;
+  --color-forest: #0a271d;
+  --color-sage: #7f9270;
+  --color-sage-light: #c8d1b6;
+
+  /* metals */
+  --color-gold: #b98a2e;
+  --color-gold-light: #d9b55e;
+  --color-gold-pale: #f0dba0;
+  --color-gold-deep: #85601d;
+
+  /* accents */
+  --color-maroon: #7d1e2c;
+  --color-maroon-deep: #5a1320;
+  --color-rose: #d26f8a;
+  --color-blush: #f4cdd3;
+  --color-sunset: #f2b277;
+
+  /* text */
+  --color-ink: #3a2a1b;
+  --color-ink-soft: #66513c;
+
+  /* typography */
+  --font-display: 'Cormorant Garamond', 'Cormorant Fallback', Georgia, serif;
+  --font-caps: 'Cinzel', 'Cinzel Fallback', Georgia, serif;
+  --font-body: 'EB Garamond', 'EB Garamond Fallback', Georgia, serif;
+  --font-script: 'Pinyon Script', 'Pinyon Fallback', cursive;
+
+  /* breakpoints (Tailwind defaults + a small-phone step) */
+  --breakpoint-xs: 25rem;
+
+  /* motion */
+  --ease-silk: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-royal: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-shimmer: shimmer 3.2s var(--ease-silk) infinite;
+}
+
+:root {
+  /* layout */
+  --header-h: 4.25rem;
+  --section-pad-y: clamp(4.5rem, 9vw, 8rem);
+  --content-max: 72rem;
+  --prose-max: 40rem;
+
+  /* surfaces & edges */
+  --radius-card: 1.25rem;
+  --radius-pill: 999px;
+  --border-gold: 1px solid color-mix(in oklab, var(--color-gold) 55%, transparent);
+  --shadow-card: 0 22px 44px -26px rgb(74 48 14 / 0.45), 0 2px 8px -2px rgb(74 48 14 / 0.12);
+  --shadow-float: 0 30px 60px -30px rgb(40 26 8 / 0.55), 0 8px 18px -8px rgb(40 26 8 / 0.2);
+  --shadow-inset-paper: inset 0 0 0 1px rgb(255 255 255 / 0.5), inset 0 0 40px rgb(185 138 46 / 0.08);
+
+  /* durations */
+  --dur-fast: 180ms;
+  --dur-base: 320ms;
+  --dur-slow: 700ms;
+  --dur-cinematic: 1400ms;
+
+  color-scheme: light;
+}
+
+/* metric-matched fallbacks keep layout stable while web fonts load */
+@font-face {
+  font-family: 'Cormorant Fallback';
+  src: local('Georgia');
+  size-adjust: 88%;
+  ascent-override: 92%;
+}
+@font-face {
+  font-family: 'Cinzel Fallback';
+  src: local('Georgia');
+  size-adjust: 112%;
+}
+@font-face {
+  font-family: 'EB Garamond Fallback';
+  src: local('Georgia');
+  size-adjust: 94%;
+}
+@font-face {
+  font-family: 'Pinyon Fallback';
+  src: local('Georgia Italic'), local('Georgia');
+  size-adjust: 84%;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--header-h) + 0.5rem);
+    background: var(--color-ivory);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--color-ivory);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    /* Cormorant / EB Garamond default to old-style figures; dates read better lining */
+    font-variant-numeric: lining-nums;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-gold-light) 55%, transparent);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus-ring, var(--color-emerald));
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+
+  [tabindex='-1']:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  img,
+  svg {
+    max-width: 100%;
+  }
+
+  button {
+    cursor: pointer;
+    font: inherit;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    line-height: 1.12;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  p {
+    margin: 0;
+    text-wrap: pretty;
+  }
+}
+
+/* Page scroll locked while the intro or the phone menu is open */
+html.is-locked,
+html.is-locked body {
+  overflow: hidden;
+}
+
+@layer components {
+  .container-content {
+    width: 100%;
+    max-width: var(--content-max);
+    margin-inline: auto;
+    padding-inline: clamp(1rem, 4vw, 2.5rem);
+  }
+
+  .section {
+    position: relative;
+    padding-block: var(--section-pad-y);
+    scroll-margin-top: var(--header-h);
+  }
+
+  /* small uppercase label above a heading */
+  .eyebrow {
+    font-family: var(--font-caps);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--color-gold-deep);
+  }
+
+  .script {
+    font-family: var(--font-script);
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 1.05;
+  }
+
+  .caps {
+    font-family: var(--font-caps);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .sr-only-focusable:not(:focus):not(:focus-within) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -150% 0;
+  }
+  60%,
+  100% {
+    background-position: 250% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
