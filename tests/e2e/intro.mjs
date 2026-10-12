@@ -94,7 +94,7 @@ for (const vp of VIEWPORTS) {
     return { state: document.querySelector('.intro')?.dataset.state, flap: w?.envelope?.flap.rotation.x, text: getComputedStyle(document.querySelector('.intro-text')).opacity }
   })
   ok(`[${vp.name}] tap opens the envelope (flap over its hinge, lettering faded)`, mid.state === 'opening' && mid.flap < -1.5 && Number(mid.text) < 0.05, mid)
-  await atTime(page, 2.6)
+  await atTime(page, 3.5)
   const later = await page.evaluate(() => {
     const w = window.__introWorld
     return { doorL: w?.doorL?.rotation.y, doorR: w?.doorR?.rotation.y, travel: w?.rig.travel }

@@ -220,7 +220,21 @@ export const Envelope = forwardRef<EnvelopeHandle, ThreeElements['group']>(funct
     })
     const gold = new THREE.MeshStandardMaterial({ color: '#d9aa50', metalness: 1, roughness: 0.32 })
     const card = new THREE.MeshStandardMaterial({ map: cardTexture(), roughness: 0.7 })
-    const glowMat = new THREE.MeshBasicMaterial({ color: '#ffd9a0', transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })
+    // the light from inside: a soft radial bloom (no hard edges), seen through the open V and above the mouth
+    const glowTex = (() => {
+      const c = document.createElement('canvas')
+      c.width = c.height = 128
+      const g = c.getContext('2d')!
+      const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64)
+      grad.addColorStop(0, 'rgba(255,255,255,1)')
+      grad.addColorStop(0.35, 'rgba(255,255,255,0.55)')
+      grad.addColorStop(0.7, 'rgba(255,255,255,0.15)')
+      grad.addColorStop(1, 'rgba(255,255,255,0)')
+      g.fillStyle = grad
+      g.fillRect(0, 0, 128, 128)
+      return new THREE.CanvasTexture(c)
+    })()
+    const glowMat = new THREE.MeshBasicMaterial({ color: '#ffd9a0', map: glowTex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })
     const lining = vel(0.85)
     lining.side = THREE.BackSide
     return { emb, velvet: vel(1), lining, inside: vel(0.35), sealMat, gold, card, glowMat }
@@ -263,8 +277,9 @@ export const Envelope = forwardRef<EnvelopeHandle, ThreeElements['group']>(funct
       {/* the inside of the back panel, in shadow */}
       <mesh geometry={built.inside} material={mats.inside} position-z={zFront + 0.0008} />
       {/* soft light that rises from inside when it opens */}
-      <mesh ref={glow} material={mats.glowMat} position={[0, h * 0.78, zFront + 0.02]}>
-        <planeGeometry args={[w * 0.9, h * 0.6]} />
+      {/* (just in front of the back panel, so the pocket hides it except through the V and above the mouth) */}
+      <mesh ref={glow} material={mats.glowMat} position={[0, h * 0.86, zFront + 0.001]}>
+        <planeGeometry args={[w * 1.15, h * 0.95]} />
       </mesh>
       <group ref={card} position={[0, h * 0.47, zFront + 0.0016]}>
         <mesh material={mats.card} castShadow>

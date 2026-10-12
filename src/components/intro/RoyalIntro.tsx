@@ -8,6 +8,13 @@ import type { IntroWorldHandle } from '../../three/IntroWorld'
 import { NamesDivider, OpenCartouche, TitleCrown, TitleScroll } from './ornaments'
 import './intro.css'
 
+// the opened envelope: the flap folds back just past upright (behind the card), and the card
+// rises clear of the 0.43 m pocket, then comes 7.5 cm forward, tipped back toward the camera
+const FLAP_OPEN = -3.38
+const CARD_RISE = 0.47
+const CARD_FORWARD = 0.075
+const CARD_TILT = -0.16
+
 const loadWorld = () => import('../../three/IntroWorld')
 const IntroWorld = lazy(() => loadWorld().then((m) => ({ default: m.IntroWorld })))
 
@@ -144,7 +151,10 @@ export function RoyalIntro({ onComplete }: Props) {
       const tl = gsap.timeline({ onComplete: finish })
       if (sceneEl) tl.to(sceneEl, { opacity: 1, duration: 0.2 }, 0)
       tl.to(text.current, { opacity: 0, duration: 0.25 }, 0)
-      if (env) tl.set(env.flap.rotation, { x: -2.95 }, 0.1).set(env.card.position, { y: env.card.position.y + 0.26 }, 0.1)
+      if (env)
+        tl.set(env.flap.rotation, { x: FLAP_OPEN }, 0.1)
+          .set(env.card.position, { y: env.card.position.y + CARD_RISE, z: env.card.position.z + CARD_FORWARD }, 0.1)
+          .set(env.card.rotation, { x: CARD_TILT }, 0.1)
       tl.to(root.current, { opacity: 0, duration: 0.45, ease: 'power1.inOut' }, 0.4)
       timeline.current = tl
       return
@@ -160,20 +170,25 @@ export function RoyalIntro({ onComplete }: Props) {
       // 2 — the wax seal cracks; the tassel swings
       .to(env.sealTop.position, { y: '+=0.004', z: '+=0.004', duration: 0.14, ease: 'power3.out' }, 0.42)
       .call(() => env.nudge(2.2), [], 0.42)
-      // 3 — the flap lifts over its hinge, warm light rises, the card comes up
-      .to(env.flap.rotation, { x: -2.95, duration: 1.05, ease: 'power2.inOut' }, 0.5)
+      // 3 — the flap lifts over its hinge and folds back, out of the way; warm light rises
+      .to(env.flap.rotation, { x: FLAP_OPEN, duration: 1.05, ease: 'power2.inOut' }, 0.5)
       .to(glowMat, { opacity: 0.55, duration: 0.8, ease: 'power1.out' }, 0.85)
-      .to(env.card.position, { y: '+=0.27', duration: 1.0, ease: 'power3.out' }, 1.05)
-      // 4 — the palace doors swing wide
-      .to(w.doorL.rotation, { y: 1.85, duration: 1.7, ease: 'power3.inOut' }, 1.2)
-      .to(w.doorR.rotation, { y: -1.85, duration: 1.7, ease: 'power3.inOut' }, 1.2)
-      // 5 — the camera walks through the doorway toward the mandap
-      .to(w.rig, { travel: 1, duration: 2.3, ease: 'power2.inOut' }, 1.6)
-      .to(w.rig, { look: 1, duration: 2.0, ease: 'power2.inOut' }, 1.75)
-      // 6 — the light fills the frame and becomes the website
-      .to(bloom.current, { opacity: 1, scale: 1, duration: 1.4, ease: 'power2.in' }, 2.65)
-      .to(veil.current, { opacity: 1, duration: 0.45, ease: 'power1.in' }, 3.6)
-      .to(root.current, { opacity: 0, duration: 0.55, ease: 'power1.out' }, 4.05)
+      // 4 — the card slides up clear of the pocket, then comes forward, in front of the
+      //     envelope, tipped toward the guest so its face can be read; held for a beat
+      .to(env.card.position, { y: `+=${CARD_RISE}`, duration: 0.95, ease: 'power2.out' }, 1.0)
+      .to(env.card.position, { z: `+=${CARD_FORWARD}`, duration: 0.6, ease: 'power2.out' }, 1.75)
+      .to(env.card.rotation, { x: CARD_TILT, duration: 0.6, ease: 'power2.out' }, 1.75)
+      .to(env.card.scale, { x: 1.06, y: 1.06, z: 1.06, duration: 0.6, ease: 'power2.out' }, 1.75)
+      // 5 — the palace doors swing wide
+      .to(w.doorL.rotation, { y: 1.85, duration: 1.7, ease: 'power3.inOut' }, 2.05)
+      .to(w.doorR.rotation, { y: -1.85, duration: 1.7, ease: 'power3.inOut' }, 2.05)
+      // 6 — the camera walks through the doorway toward the mandap
+      .to(w.rig, { travel: 1, duration: 2.3, ease: 'power2.inOut' }, 2.5)
+      .to(w.rig, { look: 1, duration: 2.0, ease: 'power2.inOut' }, 2.65)
+      // 7 — the light fills the frame and becomes the website
+      .to(bloom.current, { opacity: 1, scale: 1, duration: 1.4, ease: 'power2.in' }, 3.55)
+      .to(veil.current, { opacity: 1, duration: 0.45, ease: 'power1.in' }, 4.5)
+      .to(root.current, { opacity: 0, duration: 0.55, ease: 'power1.out' }, 4.95)
     timeline.current = tl
     if (import.meta.env.DEV) (window as unknown as { __introTimeline?: gsap.core.Timeline }).__introTimeline = tl
   }, [state, reduced, sceneFailed, finish])
