@@ -1,15 +1,20 @@
 import type { ReactNode } from 'react'
 import * as THREE from 'three'
 import { LampStand } from '../objects/BrassLamps'
+import { Elephant } from '../objects/Elephant'
 import { FloralCorner } from '../objects/FloralCluster'
 import { Garden } from '../objects/Garden'
 import { Garland, hangingStrand } from '../objects/Garland'
 import { WaxSeal, Tassel } from '../objects/Keepsakes'
 import { Lotus, LotusLeaf } from '../objects/Lotus'
+import { Lounge } from '../objects/Lounge'
 import { Petals } from '../objects/Petals'
 import { Sky } from '../objects/Sky'
 import { SunsetEnvironment } from '../env/SunsetEnvironment'
 import { CoupleCard } from './couple'
+
+/** ?lite: lighter GPU memory for the largest frames (the capture script's retry), invisible after the downsample */
+export const LITE = new URLSearchParams(location.search).has('lite')
 
 type V3 = [number, number, number]
 
@@ -29,7 +34,7 @@ export interface Shot {
 }
 
 /** The palace garden, lit for the hour. */
-function GardenSet({ dusk = 0, petals = 0 }: { dusk?: number; petals?: number }) {
+function GardenSet({ dusk = 0, petals = 0, palmsRight = true }: { dusk?: number; petals?: number; palmsRight?: boolean }) {
   const fog = new THREE.Color('#d98455').lerp(new THREE.Color('#4a2c44'), dusk)
   return (
     <>
@@ -43,7 +48,7 @@ function GardenSet({ dusk = 0, petals = 0 }: { dusk?: number; petals?: number })
         intensity={2.4 * (1 - dusk * 0.8)}
         color="#ffb36b"
         castShadow
-        shadow-mapSize={[4096, 4096]}
+        shadow-mapSize={LITE ? [2048, 2048] : [4096, 4096]}
         shadow-bias={-0.0003}
         shadow-normalBias={0.04}
         shadow-camera-left={-16}
@@ -55,8 +60,36 @@ function GardenSet({ dusk = 0, petals = 0 }: { dusk?: number; petals?: number })
       >
         <object3D attach="target" position={[0, 0, -18]} />
       </directionalLight>
-      <Garden />
+      <Garden palmsRight={palmsRight} />
       {petals > 0 && <Petals count={petals} bounds={[[-3, 0.2, -16], [3, 4.5, -4]]} seed={21} />}
+    </>
+  )
+}
+
+/** Night light for objects set into the dusk scenes: a lamp's warm key, violet sky above, a festive rim behind. */
+function NightLight() {
+  return (
+    <>
+      <SunsetEnvironment />
+      <hemisphereLight args={['#8a78c0', '#2a1608', 0.55]} />
+      <pointLight position={[-2.6, 1.4, 2.8]} color="#ffad5a" intensity={5} distance={10} decay={2} />
+      <directionalLight
+        position={[-3, 4.5, 4]}
+        intensity={1.5}
+        color="#ffc488"
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-bias={-0.0006}
+        shadow-normalBias={0.03}
+        shadow-camera-left={-2.5}
+        shadow-camera-right={2.5}
+        shadow-camera-top={3}
+        shadow-camera-bottom={-1}
+        shadow-camera-near={0.5}
+        shadow-camera-far={14}
+      />
+      <directionalLight position={[2.5, 3.2, -3]} intensity={1.6} color="#ff8ab8" />
+      <directionalLight position={[-1, 2.5, 4]} intensity={0.55} color="#ffe2bd" />
     </>
   )
 }
@@ -187,7 +220,36 @@ export const SHOTS: Record<string, Shot> = {
     content: () => <GardenSet dusk={0.85} />,
   },
 
+  // guest services: the lounge under its canopy on the lawn, lanterns lit, the garden soft behind
+  'lounge-wide': {
+    w: 1920,
+    h: 960,
+    camera: { position: [12, 1.5, -5.4], target: [12, 0.95, -11.4], fov: 44 },
+    focus: [12, 0.9, -10.6],
+    content: () => (
+      <>
+        <GardenSet petals={20} palmsRight={false} />
+        <Lounge position={[12, 0, -11]} />
+        {/* evening light falling on the front of the lounge */}
+        <spotLight position={[15.5, 4, -5.5]} target-position={[12, 0.6, -11]} angle={0.75} penumbra={1} intensity={60} distance={16} decay={2} color="#ffc890" />
+      </>
+    ),
+  },
+
   // ---------------------------------------------------------------- single objects (transparent)
+  // the carved elephant for the closing scene's foreground
+  elephant: {
+    w: 900,
+    h: 760,
+    transparent: true,
+    camera: { position: [-0.5, 1.75, 6.2], target: [-0.15, 1.4, 0], fov: 31 },
+    content: () => (
+      <>
+        <NightLight />
+        <Elephant />
+      </>
+    ),
+  },
   lotus: {
     w: 720,
     h: 470,

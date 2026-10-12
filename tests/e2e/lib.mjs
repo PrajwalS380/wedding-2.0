@@ -11,8 +11,8 @@ export const VIEWPORTS = [
   { name: 'desktop-1920', width: 1920, height: 1080, mobile: false },
 ]
 
-export function launch() {
-  return chromium.launch({ channel: 'msedge', headless: true, args: ['--use-angle=d3d11', '--ignore-gpu-blocklist'] })
+export function launch(extraArgs = []) {
+  return chromium.launch({ channel: 'msedge', headless: true, args: ['--use-angle=d3d11', '--ignore-gpu-blocklist', ...extraArgs] })
 }
 
 export function newContext(browser, vp, extra = {}) {

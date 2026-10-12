@@ -17,7 +17,7 @@
     "shots:intro": "node tests/e2e/worldshot.mjs --t=0.8,1.6,2.4,3.0",
     "stills": "node tools/render/stills.mjs",
     "music": "python tools/music/compose.py",
-    "couple": "python tools/couple/build_couple.py"
+    "couple": "python tools/couple/build_couple.py && python tools/couple/paint_couple.py"
   },
   "dependencies": {
     "@fontsource/cinzel": "^5.3.0",

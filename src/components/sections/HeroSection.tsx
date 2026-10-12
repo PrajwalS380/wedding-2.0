@@ -11,7 +11,7 @@ import './hero.css'
 /**
  * The royal wedding entrance (Reference B, screen 1). The scene is a still of the
  * same palace garden the intro walks into, rendered from src/three in landscape and
- * portrait framings, with the couple (public/site/couple.svg) standing on the aisle,
+ * portrait framings, with the couple (tools/couple/) standing on the aisle,
  * backlit by the setting sun. Jasmine hangs at the edges. The only h1.
  */
 export function HeroSection() {

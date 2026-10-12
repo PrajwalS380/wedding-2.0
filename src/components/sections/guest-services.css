@@ -121,7 +121,7 @@
   box-shadow: inset 0 0 0 1px rgb(19 77 58 / 0.55);
 }
 
-/* a lamp-lit evening in the garden, in an arched window */
+/* the guests' lounge in the garden, under its canopy, in an arched window */
 .services__window {
   margin-top: 1.6rem;
   width: min(100%, 52rem);
@@ -136,7 +136,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 50% 62%;
+  object-position: 50% 66%;
   display: block;
 }
 

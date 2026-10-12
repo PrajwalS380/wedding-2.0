@@ -14,7 +14,8 @@ import './closing.css'
 
 /**
  * The closing blessing (Reference B, screen 9): the palace at dusk, lit and
- * mirrored in the long pool, and the footer.
+ * mirrored in the long pool, a carved stone elephant dressed for the wedding in the
+ * foreground (src/three/objects/Elephant.tsx), and the footer.
  */
 export function ClosingSection() {
   const { t } = useI18n()
@@ -29,6 +30,7 @@ export function ClosingSection() {
         <SceneBackdrop className="closing__bg" scene="closing" soft={false} />
         <div className="closing__veil" aria-hidden="true" />
         {fireworks.layer}
+        <img className="decor closing__elephant" src="/site/elephant.webp" alt="" width={900} height={760} loading="lazy" decoding="async" />
         <FloralFrame corners={['bl', 'br']} className="floral-frame--dusk" />
         <div data-reveal="0" className="closing__content">
           <p className="closing__blessing">{t.closing.blessing}</p>

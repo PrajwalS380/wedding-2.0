@@ -82,7 +82,7 @@ export function GuestServicesSection() {
       </ul>
 
       <div data-reveal="2" className="services__window" aria-hidden="true">
-        <img src="/site/dusk-wide.webp" alt="" loading="lazy" decoding="async" />
+        <img src="/site/lounge-wide.webp" alt="" width={1920} height={960} loading="lazy" decoding="async" />
       </div>
     </section>
   )

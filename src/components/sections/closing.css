@@ -15,6 +15,22 @@
 .closing__bg img {
   object-position: 50% 100%;
 }
+/* the carved elephant on its plinth, at the foot of the scene, lit by the lamps */
+.closing__elephant {
+  right: -6%;
+  bottom: 1.5%;
+  width: clamp(170px, 50vw, 250px);
+  height: auto;
+  z-index: -1;
+  filter: brightness(0.74) saturate(0.9) contrast(1.06) drop-shadow(0 18px 22px rgb(10 4 14 / 0.6));
+}
+@media (min-width: 900px) {
+  .closing__elephant {
+    right: 2%;
+    bottom: 3%;
+    width: clamp(280px, 25vw, 440px);
+  }
+}
 /* the sky darkens toward the top, where the blessing sits */
 .closing__veil {
   position: absolute;

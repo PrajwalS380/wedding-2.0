@@ -17,7 +17,7 @@ import { WorldAssetsProvider } from '../assets'
 import { FlameField } from '../objects/Flame'
 import type { Quality } from '../quality'
 import { loadCouple } from './couple'
-import { SHOTS, type Shot } from './shots'
+import { LITE, SHOTS, type Shot } from './shots'
 
 const QUALITY: Quality = {
   tier: 'ultra',
@@ -76,7 +76,7 @@ function Studio({ shot }: { shot: Shot }) {
         {!shot.transparent && (
           <EffectComposer multisampling={0} enableNormalPass={false}>
             {/* contact shadows where things meet: flowers in their urns, columns on the steps, lamps on the lawn */}
-            <N8AO quality="ultra" aoRadius={0.9} distanceFalloff={0.6} intensity={2.2} color="#2a1608" halfRes={false} />
+            <N8AO quality="ultra" aoRadius={0.9} distanceFalloff={0.6} intensity={2.2} color="#2a1608" halfRes={LITE} />
             {shot.focus ? <DepthOfField target={shot.focus} focalLength={0.06} bokehScale={2.2} height={720} /> : <></>}
             <Bloom mipmapBlur intensity={0.75 + (shot.dusk ?? 0) * 0.5} luminanceThreshold={0.9} luminanceSmoothing={0.3} radius={0.72} />
             <Vignette offset={0.3} darkness={0.5} />

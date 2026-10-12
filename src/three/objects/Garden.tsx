@@ -2,7 +2,7 @@ import { MeshReflectorMaterial } from '@react-three/drei'
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
-import { mulberry32 } from '../textures/noise'
+import { createNoise2D, fbm, mulberry32 } from '../textures/noise'
 import { useWorldAssets } from '../assets'
 import { Diya, LampRow } from './BrassLamps'
 import { FlameLight } from './Flame'
@@ -11,6 +11,7 @@ import { Lotus, LotusLeaf } from './Lotus'
 import { Petals } from './Petals'
 import { Mandap } from './Mandap'
 import { Archway } from './Archway'
+import { TreeLine } from './Trees'
 
 /**
  * The palace garden beyond the doors at golden hour: a marble walkway lined with
@@ -262,10 +263,119 @@ function archShape(w: number, h: number): THREE.Shape {
 
 const DOME = (t: number) => Math.sin(Math.PI * Math.min(1, t * 0.95)) * (1 - t * 0.3) + 0.001
 
+/**
+ * The palace front, painted once: sandstone in ashlar courses, a darker plinth, a pilaster
+ * between every bay, carved panels under the upper windows, a frieze of lotus medallions and
+ * a row of dentils under the cornice. Returns the colour and a matching relief (bump) map.
+ */
+function facadeTextures(): { map: THREE.CanvasTexture; bump: THREE.CanvasTexture } {
+  const W = 2048
+  const H = 512
+  const PX = W / 26 // pixels per metre; the façade is 26 m wide and 6 m tall
+  const X = (x: number) => (x + 13) * PX
+  const Y = (y: number) => H - y * (H / 6)
+  const colour = document.createElement('canvas')
+  const relief = document.createElement('canvas')
+  colour.width = relief.width = W
+  colour.height = relief.height = H
+  const c = colour.getContext('2d')!
+  const b = relief.getContext('2d')!
+  const rand = mulberry32(12)
+  // sandstone with a little variation from block to block
+  c.fillStyle = '#c99a78'
+  c.fillRect(0, 0, W, H)
+  b.fillStyle = '#808080'
+  b.fillRect(0, 0, W, H)
+  for (let y = 0; y < 6; y += 0.5) {
+    const off = (y * 2) % 2 ? 0.45 : 0
+    for (let x = -13 - off; x < 13; x += 0.9) {
+      const v = (rand() - 0.5) * 18
+      c.fillStyle = `rgb(${201 + v},${154 + v * 0.9},${120 + v * 0.7})`
+      c.fillRect(X(x) + 1, Y(y + 0.5) + 1, 0.9 * PX - 2, 0.5 * (H / 6) - 2)
+    }
+  }
+  // joints
+  c.strokeStyle = 'rgba(90,52,34,0.35)'
+  b.strokeStyle = '#5a5a5a'
+  c.lineWidth = b.lineWidth = 1.5
+  for (let y = 0.5; y < 6; y += 0.5) {
+    for (const g of [c, b]) {
+      g.beginPath()
+      g.moveTo(0, Y(y))
+      g.lineTo(W, Y(y))
+      g.stroke()
+    }
+  }
+  const rect = (g: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number) => g.fillRect(X(x0), Y(y1), (x1 - x0) * PX, (y1 - y0) * (H / 6))
+  // plinth
+  c.fillStyle = '#a97a5c'
+  rect(c, -13, 0, 13, 0.28)
+  b.fillStyle = '#9a9a9a'
+  rect(b, -13, 0, 13, 0.28)
+  // the bays: pilasters, carved panels below the upper windows, a medallion frieze above them
+  for (let x = -12; x <= 12.01; x += 1.6) {
+    if (Math.abs(x) < 3.2) continue
+    for (const px of [x - 0.8, x + 0.8]) {
+      c.fillStyle = '#d6aa86'
+      rect(c, px - 0.09, 0.28, px + 0.09, 5.7)
+      c.fillStyle = 'rgba(80,44,28,0.45)'
+      rect(c, px + 0.09, 0.28, px + 0.12, 5.7)
+      b.fillStyle = '#b8b8b8'
+      rect(b, px - 0.09, 0.28, px + 0.09, 5.7)
+    }
+    // panel with a sunk border under the upper window
+    c.fillStyle = 'rgba(96,56,36,0.4)'
+    rect(c, x - 0.5, 2.72, x + 0.5, 3.28)
+    c.fillStyle = '#cfa07c'
+    rect(c, x - 0.43, 2.78, x + 0.43, 3.22)
+    b.fillStyle = '#5c5c5c'
+    rect(b, x - 0.5, 2.72, x + 0.5, 3.28)
+    b.fillStyle = '#9c9c9c'
+    rect(b, x - 0.43, 2.78, x + 0.43, 3.22)
+    // a lotus medallion over the window
+    for (const [g, fill, ring] of [[c, '#dcb08a', 'rgba(96,56,36,0.5)'], [b, '#c4c4c4', '#606060']] as const) {
+      g.fillStyle = fill
+      g.beginPath()
+      g.arc(X(x), Y(5.25), 0.2 * PX, 0, Math.PI * 2)
+      g.fill()
+      g.strokeStyle = ring
+      g.lineWidth = 2
+      g.stroke()
+      for (let k = 0; k < 8; k++) {
+        const a = (k / 8) * Math.PI * 2
+        g.beginPath()
+        g.ellipse(X(x) + Math.cos(a) * 0.1 * PX, Y(5.25) + Math.sin(a) * 0.1 * PX, 0.07 * PX, 0.03 * PX, a, 0, Math.PI * 2)
+        g.stroke()
+      }
+    }
+  }
+  // dentils under the cornice
+  for (let x = -13; x < 13; x += 0.22) {
+    c.fillStyle = '#d9b08e'
+    rect(c, x, 5.72, x + 0.13, 5.9)
+    c.fillStyle = 'rgba(80,44,28,0.5)'
+    rect(c, x + 0.13, 5.72, x + 0.22, 5.9)
+    b.fillStyle = '#c8c8c8'
+    rect(b, x, 5.72, x + 0.13, 5.9)
+    b.fillStyle = '#505050'
+    rect(b, x + 0.13, 5.72, x + 0.22, 5.9)
+  }
+  const map = new THREE.CanvasTexture(colour)
+  map.colorSpace = THREE.SRGBColorSpace
+  map.anisotropy = 8
+  const bump = new THREE.CanvasTexture(relief)
+  return { map, bump }
+}
+
 function Palace({ position, scale = 1 }: { position: [number, number, number]; scale?: number }) {
   const mats = useMemo(
     () => ({
       stone: hazed(new THREE.MeshStandardMaterial({ color: '#b07f62', roughness: 0.9 }), 0.5),
+      // the front of the main block carries the painted façade
+      facade: (() => {
+        const { map, bump } = facadeTextures()
+        return hazed(new THREE.MeshStandardMaterial({ map, bumpMap: bump, bumpScale: 2.2, color: '#d2a58a', roughness: 0.88 }), 0.5)
+      })(),
       trim: hazed(new THREE.MeshStandardMaterial({ color: '#d8b48c', roughness: 0.8 }), 0.5),
       shade: hazed(new THREE.MeshStandardMaterial({ color: '#3a1f18', roughness: 1 }), 0.45),
       gold: hazed(new THREE.MeshStandardMaterial({ color: '#d9a64a', metalness: 1, roughness: 0.35 }), 0.45),
@@ -290,6 +400,18 @@ function Palace({ position, scale = 1 }: { position: [number, number, number]; s
       iwanOuter,
       bulb: new THREE.IcosahedronGeometry(0.1, 0),
       merlon: new THREE.BoxGeometry(0.32, 0.42, 0.32),
+      // carved frames round the windows and doors, and a small eave over each upper window
+      windowFrame: (() => {
+        const ring = archShape(1.06, 1.7)
+        ring.holes.push(new THREE.Path(archShape(0.8, 1.5).getPoints(16)))
+        return new THREE.ShapeGeometry(ring, 10)
+      })(),
+      doorFrame: (() => {
+        const ring = archShape(1.28, 2.3)
+        ring.holes.push(new THREE.Path(archShape(1.0, 2.1).getPoints(16)))
+        return new THREE.ShapeGeometry(ring, 10)
+      })(),
+      eave: new THREE.BoxGeometry(1.25, 0.07, 0.32),
     }
   }, [])
 
@@ -297,17 +419,26 @@ function Palace({ position, scale = 1 }: { position: [number, number, number]; s
   const windowsRef = useRef<THREE.InstancedMesh>(null)
   const doorsRef = useRef<THREE.InstancedMesh>(null)
   const merlonRef = useRef<THREE.InstancedMesh>(null)
+  const windowFrameRef = useRef<THREE.InstancedMesh>(null)
+  const doorFrameRef = useRef<THREE.InstancedMesh>(null)
+  const eaveRef = useRef<THREE.InstancedMesh>(null)
   const bulbRef = useRef<THREE.InstancedMesh>(null)
   const layout = useMemo(() => {
     const windows: THREE.Matrix4[] = []
     const doors: THREE.Matrix4[] = []
     const merlons: THREE.Matrix4[] = []
     const bulbs: THREE.Vector3[] = []
+    const windowFrames: THREE.Matrix4[] = []
+    const doorFrames: THREE.Matrix4[] = []
+    const eaves: THREE.Matrix4[] = []
     const at = (x: number, y: number, z: number, ry = 0) => new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, ry, 0)), new THREE.Vector3(1, 1, 1))
     for (let x = -12; x <= 12.01; x += 1.6) {
       if (Math.abs(x) < 3.2) continue
       doors.push(at(x, 0.35, 3.02))
       windows.push(at(x, 3.4, 3.02))
+      doorFrames.push(at(x, 0.35, 3.03))
+      windowFrames.push(at(x, 3.4, 3.03))
+      eaves.push(at(x, 5.0, 3.14))
     }
     // drum windows, facing out
     for (let a = -70; a <= 70; a += 20) {
@@ -344,7 +475,7 @@ function Palace({ position, scale = 1 }: { position: [number, number, number]; s
       for (let y = 0.3; y < 16; y += 0.5) bulbs.push(new THREE.Vector3(x, y, 1.95 - y * 0.012))
       ribs(x, 16, 1, 0.9, 0.9, 8, 6, true)
     }
-    return { windows, doors, merlons, bulbs }
+    return { windows, doors, merlons, bulbs, windowFrames, doorFrames, eaves }
   }, [geos])
   useLayoutEffect(() => {
     const put = (mesh: THREE.InstancedMesh | null, ms: THREE.Matrix4[]) => {
@@ -355,10 +486,13 @@ function Palace({ position, scale = 1 }: { position: [number, number, number]; s
     put(windowsRef.current, layout.windows)
     put(doorsRef.current, layout.doors)
     put(merlonRef.current, layout.merlons)
+    put(windowFrameRef.current, layout.windowFrames)
+    put(doorFrameRef.current, layout.doorFrames)
+    put(eaveRef.current, layout.eaves)
     put(bulbRef.current, layout.bulbs.map((v) => new THREE.Matrix4().makeTranslation(v.x, v.y, v.z)))
   }, [layout])
 
-  const { stone, trim, shade, gold, glow, bulbs } = mats
+  const { stone, facade, trim, shade, gold, glow, bulbs } = mats
   const chhatri = (x: number, z: number, s: number, h: number) => (
     <group key={`${x}${z}`} position={[x, 0, z]} scale={s}>
       <mesh material={stone} position-y={h / 2}>
@@ -376,7 +510,7 @@ function Palace({ position, scale = 1 }: { position: [number, number, number]; s
   return (
     <group position={position} scale={scale}>
       {/* the main block, its cornice and crenellation */}
-      <mesh material={stone} position={[0, 3, 0]}>
+      <mesh material={[stone, stone, stone, stone, facade, stone]} position={[0, 3, 0]}>
         <boxGeometry args={[26, 6, 6]} />
       </mesh>
       <mesh material={trim} position={[0, 6.13, 0]}>
@@ -386,6 +520,9 @@ function Palace({ position, scale = 1 }: { position: [number, number, number]; s
         <boxGeometry args={[26.3, 0.14, 6.3]} />
       </mesh>
       <instancedMesh ref={merlonRef} args={[geos.merlon, trim, layout.merlons.length]} />
+      <instancedMesh ref={windowFrameRef} args={[geos.windowFrame, trim, layout.windowFrames.length]} />
+      <instancedMesh ref={doorFrameRef} args={[geos.doorFrame, trim, layout.doorFrames.length]} />
+      <instancedMesh ref={eaveRef} args={[geos.eave, trim, layout.eaves.length]} />
       <instancedMesh ref={doorsRef} args={[geos.door, glow, layout.doors.length]} />
       <instancedMesh ref={windowsRef} args={[geos.window, glow, layout.windows.length]} />
       {/* the great arched portal (iwan): a deep shaded recess with a lit doorway */}
@@ -504,64 +641,6 @@ function ReflectingPool({ from = -41, to = -96, width = 5 }: { from?: number; to
   )
 }
 
-// ------------------------------------------------------------------ the far tree line
-/** A broad tree crown with a trunk, as an alpha silhouette (generated once). */
-function treeSilhouette(): THREE.CanvasTexture {
-  const c = document.createElement('canvas')
-  c.width = 256
-  c.height = 256
-  const g = c.getContext('2d')!
-  const rand = mulberry32(5)
-  g.fillStyle = '#fff'
-  g.fillRect(122, 150, 12, 106)
-  g.fillRect(104, 176, 8, 40)
-  g.fillRect(144, 168, 8, 44)
-  for (let i = 0; i < 70; i++) {
-    const a = rand() * Math.PI * 2
-    const d = Math.sqrt(rand())
-    const x = 128 + Math.cos(a) * d * 96
-    const y = 104 + Math.sin(a) * d * 70
-    g.beginPath()
-    g.arc(x, y, 9 + rand() * 20, 0, Math.PI * 2)
-    g.fill()
-  }
-  // a ragged edge of leaf clumps
-  for (let i = 0; i < 120; i++) {
-    const a = rand() * Math.PI * 2
-    g.beginPath()
-    g.arc(128 + Math.cos(a) * (88 + rand() * 18), 104 + Math.sin(a) * (62 + rand() * 14), 2 + rand() * 6, 0, Math.PI * 2)
-    g.fill()
-  }
-  const t = new THREE.CanvasTexture(c)
-  return t
-}
-
-function TreeLine() {
-  const ref = useRef<THREE.InstancedMesh>(null)
-  const mat = useMemo(
-    () => hazed(new THREE.MeshBasicMaterial({ color: '#232619', alphaMap: treeSilhouette(), alphaTest: 0.5, side: THREE.DoubleSide }), 0.85),
-    [],
-  )
-  const geo = useMemo(() => new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0), [])
-  const N = 64
-  useLayoutEffect(() => {
-    const rand = mulberry32(31)
-    const m = new THREE.Matrix4()
-    const q = new THREE.Quaternion()
-    for (let i = 0; i < N; i++) {
-      const side = i % 2 ? 1 : -1
-      const x = side * (23 + rand() * 55)
-      const z = -74 - rand() * 34
-      const h = 7 + rand() * 7
-      const w = h * (0.9 + rand() * 0.5) * (rand() < 0.5 ? -1 : 1)
-      m.compose(new THREE.Vector3(x, -0.4, z), q, new THREE.Vector3(w, h, 1))
-      ref.current?.setMatrixAt(i, m)
-    }
-    if (ref.current) ref.current.instanceMatrix.needsUpdate = true
-  }, [])
-  return <instancedMesh ref={ref} args={[geo, mat, N]} />
-}
-
 // ------------------------------------------------------------------ the aisle runner
 function Runner({ from, to, width }: { from: number; to: number; width: number }) {
   const { velvet } = useWorldAssets()
@@ -599,17 +678,34 @@ function Runner({ from, to, width }: { from: number; to: number; width: number }
   )
 }
 
-export function Garden() {
+/** `palmsRight={false}` leaves out the palms east of the walkway (the lounge still, where their trunks would stand behind the canopy like poles). */
+export function Garden({ palmsRight = true }: { palmsRight?: boolean }) {
   const frondMat = useMemo(() => {
     const t = frondTexture()
     return new THREE.MeshStandardMaterial({ map: t, alphaTest: 0.45, color: '#c8d0a8', roughness: 0.75, side: THREE.DoubleSide })
   }, [])
   const { grass, quality } = useWorldAssets()
-  const lawn = useMemo(() => new THREE.MeshStandardMaterial({ map: grass.map, roughness: 0.95 }), [grass.map])
+  const lawn = useMemo(() => new THREE.MeshStandardMaterial({ map: grass.map, roughness: 0.95, vertexColors: true }), [grass.map])
   const lawnGeo = useMemo(() => {
-    const g = new THREE.PlaneGeometry(160, 120)
+    const g = new THREE.PlaneGeometry(160, 120, 160, 120)
     const uv = g.attributes.uv
     for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * 40, uv.getY(i) * 30)
+    // a living lawn: broad patches of richer and drier grass, and faint mowing stripes down its length
+    const noise = createNoise2D(23)
+    const pos = g.attributes.position
+    const col = new Float32Array(pos.count * 3)
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i)
+      const y = pos.getY(i)
+      const patch = fbm(noise, x * 0.06, y * 0.06, 3)
+      const dry = Math.max(0, fbm(noise, x * 0.11 + 40, y * 0.11, 2))
+      const stripe = Math.sin((x / 2.4) * Math.PI) > 0 ? 1.04 : 0.96
+      const v = (1 + patch * 0.16) * stripe
+      col[i * 3] = v * (1 + dry * 0.35)
+      col[i * 3 + 1] = v * (1 + dry * 0.12)
+      col[i * 3 + 2] = v * (1 - dry * 0.1)
+    }
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3))
     return g
   }, [])
   const lampZs = [-3, -6.4, -9.8, -13.2, -16.6, -20, -23.4, -26.8]
@@ -654,11 +750,11 @@ export function Garden() {
       <ReflectingPool />
       {/* palms */}
       <Palm position={[-7.5, 0, -22]} height={8} lean={-0.6} seed={1} frondMat={frondMat} />
-      <Palm position={[7.8, 0, -25]} height={8.6} lean={0.7} seed={2} frondMat={frondMat} />
+      {palmsRight && <Palm position={[7.8, 0, -25]} height={8.6} lean={0.7} seed={2} frondMat={frondMat} />}
       <Palm position={[-11, 0, -36]} height={9.5} lean={-0.4} seed={3} frondMat={frondMat} />
-      <Palm position={[11.5, 0, -39]} height={10} lean={0.5} seed={4} frondMat={frondMat} />
+      {palmsRight && <Palm position={[11.5, 0, -39]} height={10} lean={0.5} seed={4} frondMat={frondMat} />}
       <Palm position={[-17, 0, -50]} height={11} lean={0.3} seed={5} frondMat={frondMat} />
-      <Palm position={[18, 0, -54]} height={11.5} lean={-0.3} seed={6} frondMat={frondMat} />
+      {palmsRight && <Palm position={[18, 0, -54]} height={11.5} lean={-0.3} seed={6} frondMat={frondMat} />}
       <Palace position={[0, 0, -105]} scale={1.5} />
       <TreeLine />
     </group>

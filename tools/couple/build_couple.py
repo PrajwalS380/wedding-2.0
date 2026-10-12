@@ -1,4 +1,4 @@
-"""Builds the couple illustration (public/site/couple.svg) from anatomical contours.
+"""Builds the couple illustration (src/three/studio/assets/couple.svg) from anatomical contours.
 
 Each outline is a list of points traced around a figure; points marked with 'c' are
 corners, everything else is joined by a smooth centripetal Catmull-Rom spline (written
@@ -8,106 +8,38 @@ fold shadows, and embroidered borders whose motifs are placed one by one along e
 hem's curve. The couple stands backlit by the setting sun: a warm rim of light runs
 around every edge, and the bride's dupatta glows as the light passes through it.
 
-Writes public/site/couple.svg. Usage: python tools/couple/build_couple.py
+Writes src/three/studio/assets/couple.svg, the vector reference; tools/couple/paint_couple.py
+relights it into the couple.webp the studio uses. Usage: python tools/couple/build_couple.py
 """
 import math
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-OUT = os.path.join(ROOT, 'public', 'site', 'couple.svg')
-C = 'c'
+OUT = os.path.join(ROOT, 'src', 'three', 'studio', 'assets', 'couple.svg')
+# COUPLE_FLAT=1 leaves out the painted light (roundness gradients, fold shadows, rim glow):
+# tools/couple/paint_couple.py relights the flat art itself.
+FLAT = os.environ.get('COUPLE_FLAT') == '1'
 
 
-# ------------------------------------------------------------------ geometry helpers
-def segments(points, closed=True):
-    """Cubic Bezier segments (p1, b1, b2, p2) of a centripetal Catmull-Rom spline."""
-    pts = [(p[0], p[1]) for p in points]
-    corner = [len(p) > 2 and p[2] == 'c' for p in points]
-    n = len(pts)
-
-    def P(i):
-        return pts[i % n] if closed else pts[max(0, min(n - 1, i))]
-
-    def dist(a, b):
-        return max(math.dist(a, b) ** 0.5, 1e-4)
-
-    out = []
-    for i in range(n if closed else n - 1):
-        p0, p1, p2, p3 = P(i - 1), P(i), P(i + 1), P(i + 2)
-        if corner[i % n]:
-            p0 = p1
-        if corner[(i + 1) % n]:
-            p3 = p2
-        d1, d2, d3 = dist(p0, p1), dist(p1, p2), dist(p2, p3)
-        b1 = tuple((d1 * d1 * p2[k] - d2 * d2 * p0[k] + (2 * d1 * d1 + 3 * d1 * d2 + d2 * d2) * p1[k]) / (3 * d1 * (d1 + d2)) for k in (0, 1))
-        b2 = tuple((d3 * d3 * p1[k] - d2 * d2 * p3[k] + (2 * d3 * d3 + 3 * d3 * d2 + d2 * d2) * p2[k]) / (3 * d3 * (d3 + d2)) for k in (0, 1))
-        out.append((p1, b1, b2, p2))
-    return out
-
-
-def smooth(points, closed=True):
-    segs = segments(points, closed)
-    d = [f'M{segs[0][0][0]:.1f},{segs[0][0][1]:.1f}']
-    for _, b1, b2, p2 in segs:
-        d.append(f'C{b1[0]:.1f},{b1[1]:.1f} {b2[0]:.1f},{b2[1]:.1f} {p2[0]:.1f},{p2[1]:.1f}')
-    if closed:
-        d.append('Z')
-    return ' '.join(d)
-
-
-def sample(points, step, closed=False):
-    """Points every `step` units along the spline, with the tangent angle (degrees)."""
-    poly = []
-    for p1, b1, b2, p2 in segments(points, closed):
-        for k in range(24):
-            t = k / 24
-            mt = 1 - t
-            poly.append(tuple(mt ** 3 * p1[i] + 3 * mt * mt * t * b1[i] + 3 * mt * t * t * b2[i] + t ** 3 * p2[i] for i in (0, 1)))
-    poly.append(segments(points, closed)[-1][3])
-    out, acc, nxt = [], 0.0, 0.0
-    for a, b in zip(poly, poly[1:]):
-        L = math.dist(a, b)
-        while L > 0 and acc + L >= nxt:
-            t = (nxt - acc) / L
-            out.append((a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, math.degrees(math.atan2(b[1] - a[1], b[0] - a[0]))))
-            nxt += step
-        acc += L
-    return out
-
-
-def offset(points, d):
-    """The same open polyline shifted `d` units along its normal (for parallel bands)."""
-    out = []
-    for i, p in enumerate(points):
-        a = points[max(0, i - 1)]
-        b = points[min(len(points) - 1, i + 1)]
-        tx, ty = b[0] - a[0], b[1] - a[1]
-        L = math.hypot(tx, ty) or 1
-        out.append((p[0] - ty / L * d, p[1] + tx / L * d))
-    return out
-
-
-def motif_row(points, href, step, scale=1.0, flip=False):
-    out = []
-    for x, y, a in sample(points, step):
-        out.append(f'<use href="#{href}" transform="translate({x:.1f},{y:.1f}) rotate({a + (180 if flip else 0):.0f}) scale({scale})" />')
-    return ''.join(out)
-
-
-def path(d, **attrs):
-    a = ' '.join(f'{k.replace("_", "-")}="{v}"' for k, v in attrs.items())
-    return f'<path d="{d}" {a} />'
+from geom import C, motif_row, offset, path, sample, segments, smooth  # noqa: E402,F401
+import faces  # noqa: E402
 
 
 # ------------------------------------------------------------------ the groom (left, facing right)
 G_TAIL = [(214, 150, C), (206, 190), (198, 240), (192, 300), (190, 350), (194, 378, C), (206, 376, C), (206, 330), (212, 270), (220, 210), (228, 158, C)]
 G_TURBAN = [(206, 156, C), (198, 132), (199, 108), (208, 88), (222, 72), (242, 61), (264, 56), (286, 58), (303, 67), (314, 82), (320, 100), (320, 118), (316, 134), (312, 143, C), (290, 140), (262, 142), (236, 147), (216, 152)]
-G_HEAD = [(216, 146, C), (214, 168), (218, 190), (226, 208), (238, 224), (246, 240), (248, 272, C), (284, 276, C), (283, 262), (290, 252), (304, 247), (314, 240), (320, 230), (320, 220), (318, 215), (321, 211), (319, 207), (323, 204), (326, 200), (331, 192), (329, 184), (323, 175), (319, 167), (320, 159), (318, 150), (314, 141, C)]
-G_HAIR = [(214, 150, C), (214, 168), (218, 186), (226, 202), (236, 214, C), (246, 198), (248, 178), (242, 158, C)]
-G_BEARD = [(250, 214), (262, 228), (276, 236), (292, 238), (306, 234), (316, 226), (320, 218, C), (320, 226), (318, 234), (310, 243), (298, 250), (288, 254), (276, 252), (262, 244), (250, 232), (244, 220, C)]
+G_HEAD = faces.groom_shapes()['g-head']
+G_HAIR = faces.groom_shapes()['g-hair']
+G_BEARD = faces.groom_shapes()['g-beard']
+G_MOUSTACHE = faces.groom_shapes()['g-moustache']
 G_BODY = [(236, 262, C), (222, 275), (209, 286), (202, 304), (199, 330), (201, 362), (206, 400), (206, 432), (202, 470), (197, 530), (191, 600), (186, 668), (182, 716, C), (214, 722), (256, 724), (296, 719), (326, 709, C), (321, 650), (316, 590), (311, 530), (308, 478), (308, 444), (312, 410), (317, 370), (319, 334), (315, 304), (303, 285), (292, 272, C)]
-G_ARM = [(244, 290), (258, 284), (270, 292), (277, 318), (281, 352), (285, 384), (300, 400), (318, 406), (336, 409), (348, 411), (356, 417), (350, 425), (334, 429), (312, 428), (290, 425), (270, 411), (262, 386), (257, 352), (251, 318), (242, 300)]
-G_HAND = [(326, 405), (338, 404), (349, 406), (357, 412), (358, 420), (351, 427), (338, 430), (326, 429, C)]
+G_ARM = [(244, 290), (258, 284), (270, 292), (277, 318), (281, 352), (285, 384), (300, 400), (319, 404, C), (320, 431, C), (290, 425), (270, 411), (262, 386), (257, 352), (251, 318), (242, 300)]
+# the clasp: his palm under her hand, his fingers curling up round its edge, his thumb over its back
+G_HAND = [(316, 410, C), (326, 415), (336, 419), (345, 420), (351, 418), (355.5, 414.5), (358.5, 416), (359, 421), (356, 426.5), (348, 430.5), (336, 432.5), (324, 432), (316, 430, C)]
+G_THUMB = [(318, 413), (324, 408.5), (332, 405.5), (340, 404.6), (345.5, 405.6), (346.2, 408), (342, 409.6), (334, 410.6), (326, 414)]
 G_LEG_BACK = [(208, 712, C), (209, 760), (212, 820), (217, 872), (215, 886), (218, 896), (222, 909, C), (246, 909, C), (244, 892), (246, 880), (243, 830), (243, 770), (241, 714, C)]
 G_LEG_FRONT = [(262, 716, C), (266, 770), (271, 830), (277, 874), (275, 888), (279, 907, C), (304, 907, C), (302, 890), (304, 876), (300, 830), (300, 776), (299, 716, C)]
 G_SHOE_BACK = [(216, 906, C), (214, 926), (218, 937, C), (252, 937), (259, 927), (253, 921), (246, 909, C)]
@@ -116,10 +48,12 @@ G_STOLE = [(228, 280, C), (207, 330), (199, 420), (198, 520), (196, 610), (192, 
 G_KALGI = [(306, 82, C), (302, 64), (296, 48), (288, 34), (278, 22), (270, 14, C), (276, 26), (284, 40), (292, 56), (299, 80, C)]
 
 # ------------------------------------------------------------------ the bride (right, facing left)
-B_HEAD = [(354, 166), (350, 178), (351, 186), (347, 194), (343, 203), (339, 210), (341, 215), (347, 217), (346, 222), (349, 225), (347, 229), (350, 233), (349, 241), (354, 249), (366, 258), (376, 264), (380, 274), (382, 288, C), (414, 288, C), (418, 268), (424, 250), (434, 228), (438, 204), (434, 182), (420, 162), (398, 152), (374, 154), (360, 160)]
-B_HAIR = [(362, 160, C), (374, 154), (398, 152), (420, 162), (434, 182), (438, 204), (434, 228), (426, 246), (420, 260, C), (414, 240), (410, 216), (402, 196), (390, 180), (376, 170)]
-B_TORSO = [(382, 286, C), (374, 302), (370, 322), (372, 340), (378, 352), (382, 382), (386, 422, C), (431, 422, C), (434, 390), (436, 350), (434, 318), (428, 300), (418, 290), (414, 286, C)]
-B_ARM = [(396, 300), (406, 296), (414, 306), (415, 336), (413, 372), (410, 392), (397, 410), (380, 418), (362, 424), (352, 427), (346, 420), (354, 414), (372, 408), (388, 398), (396, 380), (398, 350), (396, 322)]
+B_HEAD = faces.bride_shapes()['b-head']
+B_HAIR = faces.bride_shapes()['b-hair']
+B_TORSO = [(382, 280, C), (374, 298), (370, 320), (372, 340), (378, 352), (382, 382), (386, 422, C), (431, 422, C), (434, 390), (436, 350), (434, 318), (428, 296), (418, 284), (414, 280, C)]
+B_ARM = [(396, 300), (406, 296), (414, 306), (415, 336), (413, 372), (410, 392), (397, 410), (380, 418), (364, 425.5, C), (361, 410.5, C), (372, 407), (388, 398), (396, 380), (398, 350), (396, 322)]
+# her hand, palm down in his: the back of the hand, slender fingers resting across his palm
+B_HAND = [(364, 410, C), (356, 410.5), (348, 411), (340, 411.6), (332, 412.4), (326.5, 413.6), (324.2, 416.2), (325.6, 418.8), (330, 419.6), (338, 420.4), (346, 422), (355, 424.6), (365, 426, C)]
 B_SLEEVE = [(396, 300), (406, 296), (414, 306), (415, 336), (413, 352, C), (397, 352, C), (398, 330), (396, 316)]
 B_SKIRT = [(384, 420, C), (378, 470), (368, 540), (356, 620), (344, 700), (334, 780), (324, 860), (316, 936, C), (340, 944), (370, 946), (400, 942), (430, 947), (460, 944), (490, 948), (520, 940, C), (512, 880), (502, 800), (490, 720), (474, 640), (458, 560), (446, 490), (438, 440), (432, 420, C)]
 B_VEIL = [(352, 166), (364, 151), (390, 140), (420, 142), (442, 156), (456, 178), (463, 206), (470, 240), (482, 288), (498, 340), (512, 396), (520, 452), (534, 520), (556, 590), (572, 660), (578, 730), (590, 800), (596, 870), (592, 936, C), (560, 944), (526, 941, C), (520, 880), (512, 820), (498, 750), (488, 690), (478, 620), (468, 550), (458, 480), (450, 410), (447, 350), (449, 300), (452, 262), (450, 232), (442, 206), (430, 186), (410, 170), (386, 164), (366, 166)]
@@ -141,7 +75,7 @@ def garland(a, b, sag, n):
 
 
 G_MALA = garland((244, 272), (300, 280), 190, 64)
-B_MALA = garland((386, 290), (420, 290), 176, 56)
+B_MALA = garland((386, 284), (420, 284), 180, 56)
 
 ROSE, JASMINE, MARIGOLD = '#c4243f', '#fbf1dc', '#f0952a'
 
@@ -164,7 +98,7 @@ def mala(points, r):
 
 # ------------------------------------------------------------------ assemble
 shapes = {
-    'g-tail': G_TAIL, 'g-turban': G_TURBAN, 'g-head': G_HEAD, 'g-hair': G_HAIR, 'g-beard': G_BEARD, 'g-body': G_BODY, 'g-arm': G_ARM, 'g-hand': G_HAND,
+    'g-tail': G_TAIL, 'g-turban': G_TURBAN, 'g-head': G_HEAD, 'g-hair': G_HAIR, 'g-beard': G_BEARD, 'g-moustache': G_MOUSTACHE, 'g-body': G_BODY, 'g-arm': G_ARM, 'g-hand': G_HAND, 'g-thumb': G_THUMB, 'b-hand': B_HAND,
     'g-leg-b': G_LEG_BACK, 'g-leg-f': G_LEG_FRONT, 'g-shoe-b': G_SHOE_BACK, 'g-shoe-f': G_SHOE_FRONT, 'g-stole': G_STOLE, 'g-kalgi': G_KALGI,
     'b-head': B_HEAD, 'b-hair': B_HAIR, 'b-torso': B_TORSO, 'b-arm': B_ARM, 'b-sleeve': B_SLEEVE, 'b-skirt': B_SKIRT, 'b-veil': B_VEIL, 'b-veil-cap': B_VEIL_CAP,
 }
@@ -174,17 +108,55 @@ clips = '\n'.join(f'    <clipPath id="clip-{k}"><use href="#{k}" /></clipPath>' 
 
 def inner_rim(k, width=5, colour='#ffd9a0', opacity=0.75):
     """A soft band of rim light just inside a shape's edge."""
+    if FLAT:
+        return ''
     return f'<use href="#{k}" fill="none" stroke="{colour}" stroke-width="{width}" opacity="{opacity}" clip-path="url(#clip-{k})" filter="url(#cp-blur2)" />'
 
 
 def shade(k, grad):
     """Roundness shading: a gradient overlay clipped to the shape."""
+    if FLAT:
+        return ''
     return f'<use href="#{k}" fill="url(#{grad})" />'
 
 
 def folds(lines, colour, width, opacity, clip):
+    if FLAT:
+        return ''
     return f'<g fill="none" stroke="{colour}" stroke-width="{width}" opacity="{opacity}" stroke-linecap="round" clip-path="url(#clip-{clip})" filter="url(#cp-blur3)">' + ''.join(path(smooth(l, closed=False)) for l in lines) + '</g>'
 
+
+def soft_wash(cx, cy, rx, ry, colour, opacity):
+    return f'<ellipse cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}" fill="{colour}" opacity="{opacity}" filter="url(#cp-blur1)" />'
+
+
+def bride_hand():
+    """Her hand: finger separations, nails, knuckle creases, mehendi (a mandala on the back of the hand,
+    vines along the fingers, dyed fingertips) and a ring with a ruby."""
+    o = ['<use href="#b-hand" fill="url(#cp-skin-b)" />']
+    o.append('<g clip-path="url(#clip-b-hand)">')
+    for y0, y1, x1 in ((414.6, 416.2, 344), (416.6, 418.4, 346), (418.6, 420.4, 350)):
+        o.append(path(f'M{x1},{y1} C{x1 - 8},{(y0 + y1) / 2 + 0.3} {x1 - 14},{y0 + 0.4} 327,{y0}', stroke='#6e3a22', stroke_width=0.55, fill='none', opacity=0.55))
+    o.append(soft_wash(345, 424, 16, 2.2, '#4a2010', 0.4))
+    for x in (340, 333):
+        o.append(path(f'M{x},{411.8 + (340 - x) * 0.1} C{x - 0.6},413.5 {x - 0.4},415 {x + 0.2},416', stroke='#6e3a22', stroke_width=0.5, fill='none', opacity=0.5))
+    o.append(soft_wash(348, 413, 9, 1.4, '#ffd8b8', 0.4))
+    m = '#7a2e10'
+    o.append(f'<circle cx="355" cy="417.6" r="3.4" fill="none" stroke="{m}" stroke-width="0.55" opacity="0.8" />')
+    o.append(f'<circle cx="355" cy="417.6" r="1.6" fill="{m}" opacity="0.75" />')
+    o.append(''.join(f'<circle cx="{355 + 4.6 * math.cos(a):.2f}" cy="{417.6 + 4.6 * math.sin(a):.2f}" r="0.55" fill="{m}" opacity="0.75" />' for a in [i * math.pi / 5 for i in range(10)]))
+    for y in (413.2, 415.6, 418):
+        o.append(path(f'M348,{y + 0.6} C343,{y} 338,{y - 0.2} 331,{y + 0.1}', stroke=m, stroke_width=0.45, stroke_dasharray='1.4 0.9', fill='none', opacity=0.7))
+    o.append(f'<path d="M324.5,414 C327,413.4 329,413.6 329.6,415 L329.6,419 C327,419.6 325.4,419 324.6,418 Z" fill="{m}" opacity="0.85" />')
+    o.append('</g>')
+    o.append('<ellipse cx="325.4" cy="415.6" rx="1.2" ry="0.9" fill="#e9b6a0" opacity="0.9" />')
+    o.append(path('M338.6,411.6 L338.6,420.6', stroke='url(#cp-gold-band)', stroke_width=1.6, fill='none'))
+    o.append('<circle cx="338.6" cy="411.4" r="1.5" fill="url(#cp-jewel)" stroke="#f7dc94" stroke-width="0.4" />')
+    o.append(inner_rim('b-hand', 2, opacity=0.45))
+    return ''.join(o)
+
+
+HANDS_BRIDE = bride_hand()
 
 # ---- groom layers
 groom = []
@@ -205,6 +177,9 @@ for k in ('g-shoe-b', 'g-shoe-f'):
 groom.append('<use href="#g-stole" fill="url(#cp-stole)" />')
 groom.append('<use href="#g-stole" fill="url(#pat-buti-small)" opacity="0.7" />')
 groom.append(f'<g clip-path="url(#clip-g-stole)">' + path(smooth([(240, 292), (219, 344), (213, 420), (215, 500), (214, 600), (210, 662)], closed=False), stroke='#e2b95c', stroke_width=5, fill='none') + '</g>')
+# head and neck (the sherwani's collar covers the neck's foot)
+groom.append(faces.groom_face())
+groom.append(inner_rim('g-head', 4, opacity=0.65))
 # sherwani
 groom.append('<use href="#g-body" fill="url(#cp-sherwani)" />')
 groom.append('<use href="#g-body" fill="url(#pat-paisley)" opacity="0.75" />')
@@ -212,6 +187,12 @@ groom.append(shade('g-body', 'cp-round-h'))
 groom.append(folds(SHERWANI_FOLDS, '#7d6844', 5, 0.35, 'g-body'))
 # chest yoke of dense zardozi around the collar
 groom.append(f'<g clip-path="url(#clip-g-body)"><path d="M232,262 C246,300 268,318 300,316 L318,300 L304,268 Z" fill="url(#pat-brocade)" opacity="0.95" /></g>')
+# bandhgala collar: a stiff band of brocade round the neck, piped in gold
+COLLAR = [(238, 243, C), (262, 248), (290, 253, C), (294, 276, C), (264, 272), (236, 266, C)]
+groom.append(path(smooth(COLLAR), fill='url(#pat-brocade)'))
+groom.append(path(smooth(COLLAR), fill='none', stroke='url(#cp-gold-band)', stroke_width=1.8))
+groom.append(path(smooth([(237, 254), (264, 259.5), (292, 264.5)], closed=False), stroke='#f6dc94', stroke_width=0.9, fill='none', opacity=0.8))
+groom.append(path(smooth([(237.5, 249), (263, 254), (291, 259)], closed=False), stroke='#8a2030', stroke_width=1.6, stroke_dasharray='0.1 4', stroke_linecap='round', fill='none'))
 # placket with buttons, hem border
 groom.append(f'<g clip-path="url(#clip-g-body)">' + path(smooth(PLACKET, closed=False), stroke='url(#cp-gold-band)', stroke_width=9, fill='none') + path(smooth(PLACKET, closed=False), stroke='url(#pat-brocade)', stroke_width=7, fill='none') + '</g>')
 for x, y, _ in sample(PLACKET[:6], 22):
@@ -220,21 +201,6 @@ hem_band = [(x, y + 6) for x, y in SHERWANI_HEM]
 groom.append(f'<g clip-path="url(#clip-g-body)">' + path(smooth(hem_band, closed=False), stroke='url(#cp-gold-band)', stroke_width=20, fill='none') + path(smooth(hem_band, closed=False), stroke='url(#pat-brocade)', stroke_width=16, fill='none') + path(smooth(offset(hem_band, -11), closed=False), stroke='#f3d68c', stroke_width=1.2, fill='none') + '</g>')
 groom.append(f'<g clip-path="url(#clip-g-body)">{motif_row(offset(SHERWANI_HEM, 22), "m-paisley", 13, 0.9)}</g>')
 groom.append(inner_rim('g-body', 7))
-# head: skin, ear, beard, eye, brow, lips
-groom.append('<use href="#g-head" fill="url(#cp-skin)" />')
-groom.append(shade('g-head', 'cp-face-shade'))
-groom.append('<use href="#g-hair" fill="#1c110b" />')
-groom.append('<use href="#g-beard" fill="#2a1a12" opacity="0.92" />')
-groom.append('<g stroke="#4a3022" stroke-width="0.9" opacity="0.7" stroke-linecap="round">' + ''.join(f'<path d="M{252 + i * 3.4},{218 + (i % 3) * 3} l{1.5 + (i % 2)},{5 + (i % 3)}" />' for i in range(19)) + '</g>')
-groom.append(path('M309,203 C314,202 320,203 323,205 C318,207 312,207 309,203 Z', fill='#2a1a12'))
-groom.append(path('M317,209 C319,210 320,212 318,214', stroke='#6a3a2c', stroke_width=1.6, fill='none'))
-groom.append(path('M258,172 C252,172 250,184 255,193 C258,198 265,198 267,191 C268,183 265,173 258,172 Z', fill='#8a5638', stroke='#6a4028', stroke_width=1))
-groom.append(path('M258,178 C255,182 256,189 260,191', stroke='#5a3420', stroke_width=1.2, fill='none'))
-groom.append(path('M300,157 C306,154 313,154 318,157', stroke='#24150e', stroke_width=2.6, fill='none', stroke_linecap='round'))
-groom.append(path('M303,166 C307,163 313,163 316,166 C312,168 307,168 303,166 Z', fill='#f3e6d6'))
-groom.append('<circle cx="311" cy="165.6" r="1.9" fill="#2a170f" />')
-groom.append(path('M302,165.5 C307,162 313,162 317,165.5', stroke='#1a0d08', stroke_width=1.3, fill='none'))
-groom.append(inner_rim('g-head', 4, opacity=0.65))
 # safa: stripes, pleats, sarpech, kalgi
 groom.append('<use href="#g-turban" fill="url(#cp-safa)" />')
 groom.append('<use href="#g-turban" fill="url(#pat-leheriya)" opacity="0.9" />')
@@ -254,9 +220,19 @@ groom.append('<use href="#g-arm" fill="url(#cp-sherwani)" />')
 groom.append('<use href="#g-arm" fill="url(#pat-paisley)" opacity="0.75" />')
 groom.append(shade('g-arm', 'cp-round-h'))
 groom.append(path('M313,404 L317,429', stroke='url(#cp-gold-band)', stroke_width=7, fill='none'))
-groom.append('<use href="#g-hand" fill="url(#cp-skin)" />')
-groom.append(path('M338,408 C344,411 348,416 350,422 M344,407 C350,410 354,414 355,419', stroke='#6a4028', stroke_width=0.9, fill='none', opacity=0.8))
 groom.append(inner_rim('g-arm', 4, opacity=0.5))
+# the clasp: his palm and curled fingers, her hand resting in it, then his thumb over hers
+groom.append('<use href="#g-hand" fill="url(#cp-skin)" />')
+groom.append('<g clip-path="url(#clip-g-hand)">' + ''.join(
+    path(f'M{x},{y0} C{x + 2.2},{y0 + 3} {x + 2.4},{y0 + 7} {x + 1},{y0 + 10}', stroke='#5a3020', stroke_width=0.8, fill='none', opacity=0.7)
+    for x, y0 in ((351.5, 418), (354.5, 417.5), (356.5, 418.5))) + soft_wash(334, 431, 18, 2.6, '#4a2010', 0.5) + '</g>')
+for x, y in ((356.8, 415.6), (358.2, 418.6)):
+    groom.append(f'<ellipse cx="{x}" cy="{y}" rx="1.3" ry="0.9" fill="#d9a88a" opacity="0.8" />')
+groom.append(HANDS_BRIDE)
+groom.append('<use href="#g-thumb" fill="url(#cp-skin)" />')
+groom.append(path('M341,405.4 C343.6,405.2 345.4,406 345.6,407.4 C344,408.2 342,408 341,405.4 Z', fill='#e2b49a', opacity=0.85))
+groom.append(path('M330,407.2 C331,408.4 331,410 330.2,411', stroke='#6a4028', stroke_width=0.6, fill='none', opacity=0.6))
+groom.append(inner_rim('g-thumb', 2, opacity=0.45))
 
 # ---- bride layers
 bride = []
@@ -270,8 +246,9 @@ for i, (x, y) in enumerate(((566, 942), (578, 944), (590, 940))):
 # lehenga: base, panel shading, buti, kalis, borders
 bride.append('<use href="#b-skirt" fill="url(#cp-lehenga)" />')
 panels = ''.join(f'<path d="{smooth(k, closed=False)}" />' for k in KALIS)
-bride.append(f'<g clip-path="url(#clip-b-skirt)" fill="none" stroke="#1f3320" stroke-width="10" opacity="0.28" filter="url(#cp-blur3)">{panels}</g>')
-bride.append(f'<g clip-path="url(#clip-b-skirt)" fill="none" stroke="#c9dcb0" stroke-width="4" opacity="0.25" filter="url(#cp-blur3)">' + ''.join(f'<path d="{smooth(offset(k, 8), closed=False)}" />' for k in KALIS) + '</g>')
+if not FLAT:
+    bride.append(f'<g clip-path="url(#clip-b-skirt)" fill="none" stroke="#1f3320" stroke-width="10" opacity="0.28" filter="url(#cp-blur3)">{panels}</g>')
+    bride.append(f'<g clip-path="url(#clip-b-skirt)" fill="none" stroke="#c9dcb0" stroke-width="4" opacity="0.25" filter="url(#cp-blur3)">' + ''.join(f'<path d="{smooth(offset(k, 8), closed=False)}" />' for k in KALIS) + '</g>')
 bride.append('<use href="#b-skirt" fill="url(#pat-buti)" opacity="0.95" />')
 bride.append(f'<g clip-path="url(#clip-b-skirt)" fill="none" stroke="#e7c06a" stroke-width="1.3" stroke-dasharray="0.1 4" stroke-linecap="round">{panels}</g>')
 bride.append(shade('b-skirt', 'cp-round-h-b'))
@@ -279,62 +256,70 @@ bride.append(f'<g clip-path="url(#clip-b-skirt)">' + path(smooth(SKIRT_MID, clos
 hem_up = offset(SKIRT_HEM, -14)
 bride.append(f'<g clip-path="url(#clip-b-skirt)">' + path(smooth(hem_up, closed=False), stroke='url(#cp-gold-band)', stroke_width=30, fill='none') + path(smooth(hem_up, closed=False), stroke='url(#pat-brocade)', stroke_width=26, fill='none') + motif_row(hem_up, 'm-paisley', 15, 1.05) + path(smooth(offset(SKIRT_HEM, 3), closed=False), stroke='#f3d68c', stroke_width=2.4, fill='none') + path(smooth(offset(SKIRT_HEM, -32), closed=False), stroke='#f3d68c', stroke_width=1.4, fill='none') + motif_row(offset(SKIRT_HEM, -40), 'm-scallop', 9, 1.0) + '</g>')
 bride.append(inner_rim('b-skirt', 7))
+# head and neck first: the blouse covers the neck's foot
+bride.append(faces.bride_face(inner_rim))
 # blouse with embroidered neckline
 bride.append('<use href="#b-torso" fill="url(#cp-blouse)" />')
 bride.append('<use href="#b-torso" fill="url(#pat-brocade)" opacity="0.55" />')
 bride.append(shade('b-torso', 'cp-round-h-b'))
-bride.append(path(smooth([(384, 292), (390, 312), (404, 320), (420, 316), (428, 302)], closed=False), stroke='url(#cp-gold-band)', stroke_width=5, fill='none'))
+NECKLINE = [(371, 303), (382, 299), (395, 291), (408, 282), (418, 276)]
+bride.append(f'<g clip-path="url(#clip-b-torso)"><path d="{smooth(NECKLINE + [(430, 270), (360, 270)])}" fill="url(#cp-skin-b)" />' + path(smooth([(375, 290), (380, 298)], closed=False), stroke='#6e3a22', stroke_width=2, opacity=0.3, fill='none') + '</g>')
+bride.append(path(smooth(NECKLINE, closed=False), stroke='url(#cp-gold-band)', stroke_width=5, fill='none'))
 bride.append(path(smooth([(386, 420), (408, 424), (431, 420)], closed=False), stroke='url(#cp-gold-band)', stroke_width=6, fill='none'))
 bride.append(inner_rim('b-torso', 4, opacity=0.6))
-# head: hair with parting, gajra bun, skin, eye with kohl, brows, lips, bindi
-bride.append('<use href="#b-head" fill="url(#cp-skin)" />')
-bride.append(shade('b-head', 'cp-face-shade-b'))
-bride.append('<use href="#b-hair" fill="#1a0f0b" />')
-bride.append(path(smooth([(368, 160), (392, 156), (416, 168), (430, 190)], closed=False), stroke='#3a2418', stroke_width=1.2, fill='none', opacity=0.8))
-bride.append('<ellipse cx="447" cy="240" rx="17" ry="19" fill="#1a0f0b" />')
-bride.append('<g>' + ''.join(f'<circle cx="{447 + 19 * math.cos(a):.1f}" cy="{240 + 20 * math.sin(a):.1f}" r="3.4" fill="url(#cp-jasmine)" />' for a in [i * math.pi / 9 - math.pi * 0.9 for i in range(14)]) + '</g>')
-bride.append(path('M352,184 C356,180 363,180 368,183', stroke='#1f120b', stroke_width=2.2, fill='none', stroke_linecap='round'))
-bride.append(path('M352,192 C356,189 362,189 366,192 C362,194 356,194 352,192 Z', fill='#f3e6d6'))
-bride.append('<circle cx="356" cy="191.6" r="1.8" fill="#1f110a" />')
-bride.append(path('M350,192 C355,187.5 362,187.5 368,191.5', stroke='#0f0805', stroke_width=1.6, fill='none'))
-bride.append(path('M352,194 C357,195.5 362,195.5 366,193.5', stroke='#2a170e', stroke_width=0.8, fill='none'))
-bride.append('<g stroke="#0f0805" stroke-width="0.8">' + ''.join(f'<path d="M{351 + i * 3},{190 - abs(i - 2) * 0.6} l-1.5,-2.6" />' for i in range(6)) + '</g>')
-bride.append(path('M346,223 C349,222 351,223 352,225 C350,226 348,226 346,223 Z M347,229 C350,228 352,229 352,231 C350,233 348,232 347,229 Z', fill='#b0404e'))
-bride.append('<circle cx="350.5" cy="177" r="1.9" fill="#b3122c" />')
-bride.append(inner_rim('b-head', 4, opacity=0.6))
-# jewellery: maang tikka, nath with chain, jhumka, choker and rani haar
-bride.append(path('M378,154 C370,160 362,166 357,171', stroke='#e8c672', stroke_width=1.3, fill='none'))
-bride.append('<circle cx="356" cy="173" r="3.4" fill="url(#cp-jewel)" stroke="#f7dc94" stroke-width="1" /><circle cx="356" cy="178.5" r="1.5" fill="#fff6e2" />')
-bride.append('<circle cx="341.5" cy="224" r="8.4" stroke="url(#cp-gold-band)" stroke-width="1.7" fill="none" />')
-bride.append('<g fill="#fff6e2">' + ''.join(f'<circle cx="{341.5 + 8.4 * math.cos(a):.1f}" cy="{224 + 8.4 * math.sin(a):.1f}" r="1.1" />' for a in [math.pi * (0.35 + i * 0.12) for i in range(6)]) + '</g>')
-bride.append(path('M348,220 C368,228 394,222 414,210', stroke='#fbeec4', stroke_width=1.3, stroke_dasharray='0.1 3.6', stroke_linecap='round', fill='none'))
-bride.append('<circle cx="414" cy="212" r="3" fill="url(#cp-jewel)" />')
-bride.append(path('M406,226 C406,218 422,218 422,226 L425,237 L403,237 Z', fill='url(#cp-gold-band)'))
-bride.append('<g fill="#fff6e2">' + ''.join(f'<circle cx="{404 + i * 3.6:.1f}" cy="240" r="1.4" />' for i in range(6)) + '</g>')
-bride.append(path(smooth([(384, 292), (392, 300), (404, 304), (418, 302), (428, 294)], closed=False), stroke='url(#cp-gold-band)', stroke_width=6, fill='none'))
-bride.append(path(smooth([(384, 293), (392, 301), (404, 305), (418, 303), (428, 295)], closed=False), stroke='#c4243f', stroke_width=2.6, stroke_dasharray='0.1 6', stroke_linecap='round', fill='none'))
-bride.append(path(smooth([(386, 300), (390, 330), (404, 350), (422, 346), (434, 330)], closed=False), stroke='#fbeec4', stroke_width=3.4, stroke_dasharray='0.1 5.2', stroke_linecap='round', fill='none'))
-bride.append('<path d="M404,350 C399,350 397,356 404,364 C411,356 409,350 404,350 Z" fill="url(#cp-jewel)" stroke="#f7dc94" stroke-width="1" />')
+# jewellery on the neck and chest: choker and rani haar
+CHOKER = [(373, 263), (382, 269), (394, 273), (405, 271), (413, 265)]
+bride.append(path(smooth(CHOKER, closed=False), stroke='url(#cp-gold-band)', stroke_width=7, fill='none', stroke_linecap='round'))
+bride.append(path(smooth(CHOKER, closed=False), stroke='#c4243f', stroke_width=2.8, stroke_dasharray='0.1 5.4', stroke_linecap='round', fill='none'))
+bride.append('<g fill="#fff6e2">' + ''.join(f'<circle cx="{x:.1f}" cy="{y + 4.6:.1f}" r="1.1" />' for x, y, _ in sample(CHOKER, 3.6)) + '</g>')
+HAAR = [(411, 276), (404, 300), (394, 320), (382, 334), (373, 340)]
+bride.append(path(smooth(HAAR, closed=False), stroke='#fbeec4', stroke_width=3.4, stroke_dasharray='0.1 5.2', stroke_linecap='round', fill='none'))
+bride.append(path(smooth([(x - 3, y + 6) for x, y in HAAR], closed=False), stroke='url(#cp-gold-band)', stroke_width=2.2, stroke_dasharray='4 2', fill='none'))
+bride.append('<path d="M372,340 C367,340 365,346 372,355 C379,346 377,340 372,340 Z" fill="url(#cp-jewel)" stroke="#f7dc94" stroke-width="1" />')
+bride.append(faces.bride_jewels())
 # veil over her head, in front of the hair
-bride.append('<use href="#b-veil-cap" fill="url(#cp-veil)" opacity="0.85" />')
+bride.append('<use href="#b-veil-cap" fill="url(#cp-veil-cap)" />')
+# soft folds radiating from the crown where the net drapes over the head
+bride.append('<g clip-path="url(#clip-b-veil-cap)" fill="none" stroke="#fff0e4" stroke-width="2.4" opacity="0.35" stroke-linecap="round" filter="url(#cp-blur1)">' + ''.join(
+    path(smooth([(392 + 6 * k, 141), (388 + 9 * k, 156), (382 + 13 * k, 172)], closed=False)) for k in range(-3, 6)) + '</g>')
 bride.append('<use href="#b-veil-cap" fill="url(#pat-sequin)" opacity="0.9" />')
 bride.append(path(smooth(VEIL_EDGE[:8], closed=False), stroke='url(#cp-gold-band)', stroke_width=4, fill='none'))
 # varmala, then her arm, sleeve, bangles and mehendi hand
 bride.append(mala(B_MALA, 4.2))
-bride.append('<use href="#b-arm" fill="url(#cp-skin)" />')
+bride.append('<use href="#b-arm" fill="url(#cp-skin-b)" />')
 bride.append(shade('b-arm', 'cp-round-h-b'))
 bride.append('<use href="#b-sleeve" fill="url(#cp-blouse)" /><use href="#b-sleeve" fill="url(#pat-brocade)" opacity="0.5" />')
 bride.append(path('M397,350 L413,350', stroke='url(#cp-gold-band)', stroke_width=4.5, fill='none'))
-for i, c in enumerate(('#e7c06a', '#b3122c', '#e7c06a', '#b3122c', '#e7c06a', '#f3d68c')):
-    x = 382 + i * 2.8
-    bride.append(f'<path d="M{x},{398 + i * 1.1} C{x + 4},{402 + i} {x + 5},{408 + i} {x + 3},{414 + i * 0.6}" stroke="{c}" stroke-width="2.2" fill="none" />')
-bride.append('<g fill="#a2522a" opacity="0.7">' + ''.join(f'<circle cx="{352 + (i % 4) * 4.2:.1f}" cy="{417 + (i // 4) * 3.6:.1f}" r="0.8" />' for i in range(12)) + '</g>')
+# mehendi climbing the forearm: a vine with leaves and dots
+vine = [(366, 417), (374, 413.5), (382, 409.5), (390, 404), (397, 396)]
+bride.append('<g clip-path="url(#clip-b-arm)">' + path(smooth(vine, closed=False), stroke='#8a3414', stroke_width=0.7, fill='none', opacity=0.75)
+             + ''.join(f'<path d="M{x:.1f},{y:.1f} q2,-3 4,-1 q-2,2 -4,1 Z" fill="#8a3414" opacity="0.7" transform="rotate({a:.0f} {x:.1f} {y:.1f})" />' for x, y, a in sample(vine, 5))
+             + ''.join(f'<circle cx="{x + 2.5:.1f}" cy="{y + 3:.1f}" r="0.55" fill="#8a3414" opacity="0.7" />' for x, y, a in sample(vine, 3)) + '</g>')
+# the chooda: red and ivory bangles from wrist to mid-forearm, gold kadas at each end
+for i in range(13):
+    t = i / 12
+    top = (363 + 27 * t, 410.5 - 13 * t)
+    bot = (365 + 32 * t, 425.5 - 15 * t)
+    c = '#e7c06a' if i in (0, 12) else '#b3122c' if i % 2 else '#f2e6cc'
+    w = 2.6 if i in (0, 12) else 2.0
+    mid = ((top[0] + bot[0]) / 2 - 2.4, (top[1] + bot[1]) / 2)
+    bride.append(f'<path d="M{top[0]:.1f},{top[1]:.1f} Q{mid[0]:.1f},{mid[1]:.1f} {bot[0]:.1f},{bot[1]:.1f}" stroke="{c}" stroke-width="{w}" fill="none" stroke-linecap="round" />')
+    if c == '#b3122c':
+        bride.append(f'<path d="M{top[0]:.1f},{top[1]:.1f} Q{mid[0]:.1f},{mid[1]:.1f} {bot[0]:.1f},{bot[1]:.1f}" stroke="#f3d68c" stroke-width="0.5" stroke-dasharray="0.1 2.2" stroke-linecap="round" fill="none" />')
 bride.append(inner_rim('b-arm', 3.5, opacity=0.5))
+
+RIM = '' if FLAT else '''  <!-- rim light: a warm glow around every backlit edge -->
+  <g fill="none" stroke="#ffcf8a" stroke-width="6" opacity="0.75" filter="url(#cp-glow)">
+    <use href="#g-tail" /><use href="#g-leg-b" /><use href="#g-leg-f" /><use href="#g-shoe-b" /><use href="#g-shoe-f" /><use href="#g-body" /><use href="#g-head" /><use href="#g-turban" /><use href="#g-kalgi" /><use href="#g-arm" />
+    <use href="#b-skirt" /><use href="#b-torso" /><use href="#b-head" /><use href="#b-arm" />
+  </g>'''
 
 SVG = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 960" width="100%" height="100%" preserveAspectRatio="xMidYMax meet">
   <!-- Generated by tools/couple/build_couple.py — edit the contours and layers there, not here. -->
   <defs>
     <filter id="cp-glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3.2" /></filter>
+    <filter id="cp-blur1" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="0.8" /></filter>
+    <filter id="cp-blur4" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5" /></filter>
     <filter id="cp-blur2" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2" /></filter>
     <filter id="cp-blur3" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="3" /></filter>
 
@@ -346,6 +331,8 @@ SVG = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 960" width="1
     <linearGradient id="cp-stole" x1="0" y1="280" x2="0" y2="662" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8e2434" /><stop offset="1" stop-color="#5c1422" /></linearGradient>
     <linearGradient id="cp-feather" x1="0" y1="14" x2="0" y2="84" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fffaf0" /><stop offset="1" stop-color="#e8d9b8" /></linearGradient>
     <linearGradient id="cp-skin" x1="0" y1="140" x2="0" y2="430" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#b47d56" /><stop offset="1" stop-color="#8f5a3a" /></linearGradient>
+    <linearGradient id="cp-skin-b" x1="0" y1="140" x2="0" y2="430" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#bd8660" /><stop offset="1" stop-color="#9a6444" /></linearGradient>
+    <linearGradient id="cp-veil-cap" x1="0" y1="140" x2="0" y2="232" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffc9c4" stop-opacity="0.62" /><stop offset="1" stop-color="#f2a2ae" stop-opacity="0.5" /></linearGradient>
     <linearGradient id="cp-face-shade" x1="210" y1="0" x2="332" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#3a1f12" stop-opacity="0.45" /><stop offset="0.55" stop-color="#3a1f12" stop-opacity="0" /><stop offset="1" stop-color="#ffcf9f" stop-opacity="0.18" /></linearGradient>
     <linearGradient id="cp-face-shade-b" x1="440" y1="0" x2="338" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#3a1f12" stop-opacity="0.45" /><stop offset="0.55" stop-color="#3a1f12" stop-opacity="0" /><stop offset="1" stop-color="#ffcf9f" stop-opacity="0.18" /></linearGradient>
     <linearGradient id="cp-lehenga" x1="0" y1="420" x2="0" y2="948" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#86a374" /><stop offset="0.5" stop-color="#668658" /><stop offset="1" stop-color="#46613e" /></linearGradient>
@@ -383,11 +370,7 @@ SVG = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 960" width="1
 
   <ellipse cx="380" cy="941" rx="215" ry="9" fill="#2a160e" opacity="0.32" filter="url(#cp-glow)" />
 
-  <!-- rim light: a warm glow around every backlit edge -->
-  <g fill="none" stroke="#ffcf8a" stroke-width="6" opacity="0.75" filter="url(#cp-glow)">
-    <use href="#g-tail" /><use href="#g-leg-b" /><use href="#g-leg-f" /><use href="#g-shoe-b" /><use href="#g-shoe-f" /><use href="#g-body" /><use href="#g-head" /><use href="#g-turban" /><use href="#g-kalgi" /><use href="#g-arm" />
-    <use href="#b-skirt" /><use href="#b-torso" /><use href="#b-head" /><use href="#b-arm" />
-  </g>
+{RIM}
 
   <!-- the bride (behind the groom's reaching hand) -->
   <g>{''.join(bride)}</g>
@@ -396,7 +379,8 @@ SVG = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 960" width="1
 </svg>
 '''
 
-os.makedirs(os.path.dirname(OUT), exist_ok=True)
-with open(OUT, 'w', encoding='utf-8') as f:
-    f.write(SVG)
-print('wrote', os.path.relpath(OUT, ROOT), len(SVG) // 1024, 'KB')
+if __name__ == '__main__':
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    with open(OUT, 'w', encoding='utf-8') as f:
+        f.write(SVG)
+    print('wrote', os.path.relpath(OUT, ROOT), len(SVG) // 1024, 'KB')

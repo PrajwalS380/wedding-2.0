@@ -249,10 +249,21 @@
     padding-bottom: 2rem;
   }
   .hero__scroll {
+    position: relative;
+    isolation: isolate;
     color: #3a2818;
     text-shadow:
       0 0 6px rgb(255 246 228 / 1),
       0 0 14px rgb(255 246 228 / 0.95);
+  }
+  /* a pool of warm light behind the cue so it reads over grass and foliage */
+  .hero__scroll::before {
+    content: '';
+    position: absolute;
+    inset: -0.9rem -2.2rem -0.7rem;
+    z-index: -1;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(255 246 228 / 0.92) 0%, rgb(255 246 228 / 0.7) 55%, rgb(255 246 228 / 0) 100%);
   }
   .hero__garland {
     height: min(70vh, 640px);

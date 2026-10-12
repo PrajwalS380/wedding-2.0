@@ -1,7 +1,11 @@
 import { useMemo } from 'react'
 import * as THREE from 'three'
+import coupleUrl from './assets/couple.webp'
 
-/** The couple illustration (public/site/couple.svg), loaded once before any shot renders. */
+/**
+ * The couple: the illustration (tools/couple/build_couple.py) relit as rounded, sunlit forms by
+ * tools/couple/paint_couple.py. Loaded once before any shot renders.
+ */
 let image: HTMLImageElement | null = null
 
 export function loadCouple(): Promise<void> {
@@ -12,7 +16,7 @@ export function loadCouple(): Promise<void> {
       resolve()
     }
     img.onerror = () => resolve()
-    img.src = '/site/couple.svg'
+    img.src = coupleUrl
   })
 }
 
@@ -25,9 +29,13 @@ export function CoupleCard({ position, height = 1.8 }: { position: [number, numb
   const material = useMemo(() => {
     if (!image) return null
     const c = document.createElement('canvas')
-    c.width = 1200
-    c.height = 1920
-    c.getContext('2d')!.drawImage(image, 0, 0, c.width, c.height)
+    // at most 1200 x 1920: the shots already sit near the GPU's memory limit
+    const k = Math.min(1, 1920 / image.naturalHeight)
+    c.width = Math.round(image.naturalWidth * k)
+    c.height = Math.round(image.naturalHeight * k)
+    const g = c.getContext('2d')!
+    g.imageSmoothingQuality = 'high'
+    g.drawImage(image, 0, 0, c.width, c.height)
     const t = new THREE.CanvasTexture(c)
     t.colorSpace = THREE.SRGBColorSpace
     t.anisotropy = 8

@@ -22,7 +22,7 @@ composition; P3 polish.
 | --- | --- |
 | Royal intro | Live WebGL scene (three.js / R3F); every object modelled in code, textures baked on the GPU at start-up |
 | Section scenes | Stills rendered from the same 3D world with sun shadows, ambient occlusion and depth of field (`npm run stills`) |
-| Couple | Generated vector illustration (`tools/couple/build_couple.py`), set into the 3D scene as a card |
+| Couple | Generated vector illustration (`tools/couple/build_couple.py`, faces in `faces.py`), relit as rounded forms by `paint_couple.py`, set into the 3D scene as a card |
 | Ornament, cards, controls | SVG and CSS; generated parchment texture |
 | Fireworks, petals | 2D canvas, paused off-screen |
 
@@ -35,8 +35,9 @@ composition; P3 polish.
 | Gold edges and hardware | gilt edges, ring handles | gilt beads and strips, brass ring handles, threshold | PASS | — |
 | Jasmine garlands | heavy white strands | toran swags and strands of five-petal flowers, buds and leaves with rose and marigold accents (instanced) | PASS | Buds lightened to 40 triangles for performance; same look |
 | Flowers at the doorway corners | roses, greenery at the top corners | garden roses (petal by petal), jasmine sprays, glossy leaves and bougainvillea at both upper corners, anchored to the visible frame on every screen | PASS | **Added in Phase 9** (`FloralCorner` in `Vestibule.tsx`) |
-| Sunset sky and clouds | warm glowing sky, soft clouds | gradient dome with sun disc, halo and banded clouds | PARTIAL (P3) | Clouds are thinner and less painterly than the reference |
-| Distant palace | domes and minarets in haze | palace with onion dome, chhatris, minarets, lit arches, strings of lights, hazed | PASS | — |
+| Sunset sky and clouds | warm glowing sky, soft clouds | gradient dome with sun disc and halo; domain-warped cloud banks lit from the sun's side (gold edges, mauve undersides, silver lining near the sun) and high cirrus; detail by device tier, drawn after the scene so hidden sky costs nothing | PASS | **Rebuilt after Phase 9** |
+| Distant palace | domes and minarets in haze | palace with onion dome, chhatris, minarets, lit arches with carved frames and eaves, a painted sandstone façade (ashlar, pilasters, carved panels, lotus-medallion frieze, dentils) with relief, strings of lights, hazed | PASS | Façade detail **added after Phase 9** |
+| Trees beyond the lawn | soft, leafy tree line | four kinds of tree painted leaf-clump by leaf-clump, backlit with a gold rim, in two rows of depth (were flat silhouettes) | PASS | **Rebuilt after Phase 9** (`Trees.tsx`) |
 | Mandap through the doors | flower-hung mandap | fluted columns wound with garlands, carved entablature, bell fringe, gathered silk ceiling, chandelier, drapes, seats, rose urns, diyas | PASS | **Detailed in Phase 9** (`Mandap.tsx`) |
 | Brass lamps and flames | kuthuvilakku lamps | lathe-turned brass lamps, five flickering flames each, warm local light | PASS | — |
 | Lotus flowers | pink lotus in urlis | three rings of cupped, colour-graded petals, pod and stamens, pads | PASS | — |
@@ -55,8 +56,10 @@ composition; P3 polish.
 | Object | Status | Note |
 | --- | --- | --- |
 | Palace garden scene (archway, palace, mandap) | PASS | Marble cusped archway with fluted columns, carved band, gilt medallion, bells and bougainvillea; palace and mandap behind; three framings |
-| Couple illustration | PARTIAL (P2) | Embroidered sherwani (paisley weave, brocade yoke, buttoned placket, hem band), leheriya safa with sarpech and kalgi, a sage lehenga with buti, kalis and zardozi borders, a sequinned dupatta, jewellery and varmalas. The reference couple is painterly and embracing, with fuller facial detail; ours are stylised in profile. Kept as the approved illustrated concept. |
+| Couple illustration | PASS (style differs) | **Redrawn after Phase 9:** anatomical profile heads (brow, nasion, nose with nostril wing, philtrum, two-tone lips, chin, jaw, throat), almond eyes with iris, catch-light, lid crease and lashes (kohl wing for the bride), brows hair by hair, ears with helix and tragus, beard and hair in strands, a bandhgala collar, clasped hands with mehendi, a ring and a red-and-ivory chooda. Then relit as rounded forms: cloth folds and kalis pressed in, sky fill, carpet bounce, a sunset rim round the silhouette, contact shadows, glints on the zari. The reference couple embraces in a 3/4 view; ours stand in profile in the miniature-painting manner |
 | Lamps, shrubs, marigold borders | PASS | — |
+| Lawn | PASS | Broad patches and faint mowing stripes (were a flat green) |
+| "Scroll to explore" cue on wide screens | PASS | **Fixed:** it sat unreadable over grass; now on a soft pool of light |
 | Water channel with reflected lamps (reference foreground) | PARTIAL (P3) | Our hero shows the aisle; the pool appears in the venue scene |
 | Petals and light | PASS | Drifting petals and motes (canvas, paused off-screen) |
 | Typography, monogram, CTA, scroll cue, navigation | PASS | — |
@@ -85,7 +88,7 @@ composition; P3 polish.
 | Object | Status | Note |
 | --- | --- | --- |
 | Compass dial, needle, emblem, cardinal letters | PASS | Turns to the hovered or focused destination |
-| Ornate arch framing the dial | PARTIAL → **fixed in Phase 9** | Gilded cusped arch drawn behind the dial (`CuspedArch`) |
+| Ornate arch framing the dial | PARTIAL → **fixed in Phase 9** | Gilded jharokha niche drawn behind the dial (`CompassArch`) |
 | Four destination tiles, icons, active state | PASS | Gold needle-tip marker on the active tile |
 | Flowers | PASS | Four corners |
 
@@ -111,7 +114,7 @@ composition; P3 polish.
 | Object | Status | Note |
 | --- | --- | --- |
 | Four cards (travel and stay, local guide, etiquette, need help) | PASS | Honest content; Call and WhatsApp on the confirmed number |
-| Lounge scene below the cards (reference) | PARTIAL (P3), substituted | A lamp-lit dusk view of the garden in an arched window |
+| Lounge scene below the cards (reference) | PASS | **Added after Phase 9:** a majlis on the lawn under a draped canopy: carved diwans with velvet mattresses, embroidered silk cushions and tasselled bolsters, a knotted carpet, a brass tea table, lanterns, jasmine swags and lamps (`Lounge.tsx`, `lounge-wide`) |
 
 ### 8. RSVP
 
@@ -129,7 +132,7 @@ composition; P3 polish.
 | Dusk scene with the lit palace | PASS | — |
 | Names, blessing, message, rule | PASS | — |
 | Share, directions, add to calendar (plus RSVP) | PASS | — |
-| Foreground flowers and lotus pond, stone elephant (reference) | PARTIAL (P3) | Dusk-toned flower corners **added in Phase 9**; no pond or statue |
+| Foreground flowers and lotus pond, stone elephant (reference) | PASS | Dusk-toned flower corners (Phase 9) and **a carved sandstone elephant on a lotus-banded plinth, with caparison, frontlet, bells and garland** (`Elephant.tsx`); the long pool with lotus and diyas shows on phones. No separate foreground pond |
 | Footer emblem, credit, back to top | PASS | — |
 | Magic moment: fireworks and coloured smoke | PASS | Requested by you; plays once when the scene is in view, replayable |
 
@@ -163,13 +166,18 @@ composition; P3 polish.
 
 ## Remaining, ranked
 
-- **P2 — couple illustration:** facial detail and a more natural, painterly
-  rendering. A further illustration pass would be needed, keeping the approved
-  concept.
-- **P3 — sky:** richer, more painterly clouds in the sunset sky.
-- **P3 — closing foreground:** a lotus pond and stone elephant, as in the
-  reference.
-- **P3 — guest services:** a lounge scene in place of the garden window.
+- **P3 — couple pose:** the reference shows an embrace in 3/4 view; ours is a
+  profile pair holding hands (kept: it reads as a miniature painting and avoids
+  inventing a likeness).
 - **P3 — mobile floor:** planar marble reflections, if budget allows.
+- **P3 — closing foreground pond:** the pool shows on phones; on wide screens the
+  closing frames the sky and palace instead.
 
-No P0 or P1 findings remain.
+No P0, P1 or P2 findings remain.
+
+## Rendering note
+
+Large stills are rendered at 1.5× with half-resolution ambient occlusion and
+2048 px shadows (`npm run stills -- --dsf=1.5 --lite`) on this laptop GPU, and
+downsampled; the difference from 2× is not visible at display size. A failed
+or blank frame never replaces an existing still.
